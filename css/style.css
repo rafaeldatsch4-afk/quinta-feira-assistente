@@ -119,6 +119,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   border-radius: 10px; border: 1px solid var(--borda); background: transparent;
   color: var(--texto-2); transition: 0.2s;
 }
+.botao-escuta.ativo { color: var(--verde); border-color: var(--verde); box-shadow: 0 0 14px rgba(77, 255, 166, 0.35); }
+.botao-escuta.armado { color: var(--magenta); border-color: var(--magenta); animation: anel 1.3s ease-out infinite; }
 .botao-icone:hover { color: var(--ciano); border-color: var(--borda-forte); box-shadow: 0 0 14px var(--ciano-suave); }
 
 /* ---------- Menu lateral (só no celular) ---------- */

@@ -23,6 +23,8 @@ window.QF_PADRAO = {
   topicoPc: "",
   // Contatos do WhatsApp, uma linha por contato: nome=número com DDD.
   contatos: "",
+  // Escuta contínua: ouve sempre e só age depois de "Ei, Quinta-Feira".
+  escutaContinua: false,
   voz: "",
   velocidade: 1,
   tom: 1,

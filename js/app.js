@@ -23,7 +23,10 @@
   };
 
   let estado = "ocioso";
+  let silencioAte = 0; // depois que ela termina de falar, a escuta contínua espera um instante
+
   function definirEstado(novo) {
+    if (estado === "falando" && novo !== "falando") silencioAte = Date.now() + 800;
     estado = novo;
     document.body.dataset.estado = novo;
     el.rotuloEstado.textContent = ROTULOS[novo];
@@ -371,6 +374,7 @@
     };
     rec.onend = () => {
       ouvindo = false;
+      window.Escuta.retomar();
       pararVisualMic();
       el.legenda.classList.remove("parcial");
       if (final.trim()) {
@@ -380,7 +384,8 @@
         if (estado === "ouvindo") definirEstado("ocioso");
       }
     };
-    rec.start();
+    // A escuta contínua precisa soltar o microfone antes.
+    window.Escuta.pausar().then(() => rec.start());
   }
 
   function pararDeOuvir() { if (rec && ouvindo) rec.stop(); }
@@ -600,6 +605,7 @@
     botaoLive.classList.toggle("ativo", ligado);
     botaoLive.setAttribute("aria-pressed", String(ligado));
     if (!ligado) {
+      window.Escuta.retomar();
       window.Nucleo.usarAnalisador(null);
       definirEstado("ocioso");
       el.legenda.textContent = "Modo Live encerrado.";
@@ -616,6 +622,7 @@
     if (botaoLive.classList.contains("conectando")) return;
     pararFala();
     pararDeOuvir();
+    await window.Escuta.pausar();
     el.legenda.classList.remove("parcial");
     el.legenda.textContent = "Conectando ao modo Live…";
     botaoLive.classList.add("conectando");
@@ -628,11 +635,60 @@
       });
     } catch (e) {
       window.Live.parar();
+      window.Escuta.retomar();
       adicionarMensagem("ia", `⚠ ${e.message}`, "erro");
       el.legenda.textContent = "";
       definirEstado("ocioso");
     } finally {
       botaoLive.classList.remove("conectando");
+    }
+  });
+
+  /* ---------------- Escuta contínua ("Ei, Quinta-Feira") ---------------- */
+
+  const botaoEscuta = $("#botao-escuta");
+
+  function pintarEscuta() {
+    botaoEscuta.classList.toggle("ativo", window.Escuta.ligado);
+    botaoEscuta.classList.toggle("armado", window.Escuta.armado);
+    botaoEscuta.setAttribute("aria-pressed", String(window.Escuta.ligado));
+    $("#status-voz span").textContent = window.Escuta.ligado ? "ESCUTA LIGADA" : "VOZ ATIVA";
+  }
+
+  window.Escuta.configurar({
+    emUso: () => estado === "falando" || estado === "pensando" || ouvindo || window.Live.ativo || Date.now() < silencioAte,
+    aoArmar: () => {
+      definirEstado("ouvindo");
+      el.legenda.classList.add("parcial");
+      el.legenda.textContent = "Pode falar…";
+      pintarEscuta();
+    },
+    aoDesarmar: () => {
+      if (estado === "ouvindo" && !ouvindo && !window.Live.ativo) {
+        definirEstado("ocioso");
+        el.legenda.classList.remove("parcial");
+        el.legenda.textContent = "";
+      }
+      pintarEscuta();
+    },
+    aoComando: (texto) => { el.legenda.classList.remove("parcial"); enviar(texto); },
+    aoErro: (t) => {
+      adicionarMensagem("ia", `⚠ ${t}`, "erro");
+      cfg.salvar({ escutaContinua: false });
+      pintarEscuta();
+    },
+    aoMudar: pintarEscuta,
+  });
+
+  botaoEscuta.addEventListener("click", async () => {
+    if (window.Escuta.ligado) {
+      window.Escuta.desligar();
+      cfg.salvar({ escutaContinua: false });
+      return;
+    }
+    if (await window.Escuta.ligar()) {
+      cfg.salvar({ escutaContinua: true });
+      adicionarMensagem("ia", "Escuta contínua ligada. Diga “Ei, Quinta-Feira” e depois o comando. Deixe a tela ligada e esta página aberta.");
     }
   });
 
@@ -646,4 +702,5 @@
       : `${sauda}, ${cfg.nomeUsuario}. Estou em modo offline — conecte meu cérebro no n8n pela engrenagem no topo.`
   );
   el.campo.focus();
+  if (cfg.escutaContinua) window.Escuta.ligar();
 })();

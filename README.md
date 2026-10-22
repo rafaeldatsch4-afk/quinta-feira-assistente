@@ -106,6 +106,19 @@ A chave fica salva só no navegador; o Google recomenda tokens temporários para
 públicos, mas para uso pessoal a chave direta funciona. No plano gratuito do Gemini API,
 o modelo Live aparece como gratuito.
 
+### Escuta contínua ("Ei, Quinta-Feira")
+
+O botão de ondas no topo deixa a página ouvindo o tempo todo. Ela só reage depois de **"Ei, Quinta-Feira"**
+(ou "Ô", "Oi", "Ok", "Hey" + "Quinta-Feira"): pode dizer tudo junto ("Ei, Quinta-Feira, liga a lanterna") ou
+o gatilho e, em seguida, o comando (tem 8 segundos). Só "quinta-feira" não ativa, para "amanhã é quinta-feira"
+passar batido. Ela para de ouvir enquanto fala e quando o microfone manual ou o Live estão em uso.
+
+Limites do navegador: só funciona com a **página aberta e a tela ligada** (o botão pede ao Android para manter a
+tela acesa; deixe o celular carregando); usa o reconhecimento de voz do Chrome, que envia o áudio ao Google
+enquanto estiver ligado; e no Android o Chrome pode fazer um "plim" ao reiniciar a escuta. Para atender com a
+tela apagada seria preciso um app nativo (por exemplo, o gatilho "Ok Google" do Assistente ou o plugin AutoVoice
+do Tasker).
+
 ### O que a interface envia
 
 `POST` com JSON:
@@ -167,6 +180,7 @@ js/nucleo.js                   animação do núcleo (canvas)
 js/cerebro.js                  integração com o n8n + modo offline
 js/live.js                     modo Live (Gemini Live API em tempo real)
 js/dispositivos.js             comandos para celular (Tasker) e PC via ntfy
+js/escuta.js                   escuta contínua com gatilho "Ei, Quinta-Feira"
 js/app.js                      voz, chat, painéis e configurações
 n8n/quinta-feira-workflow.json workflow de exemplo para importar
 dispositivos/                  ações no celular (Tasker) e no PC (quinta_pc.py)
