@@ -41,7 +41,7 @@ window.Cerebro = (() => {
   // { output }, { resposta }, { text }, [ { output } ], ou texto puro.
   function extrairResposta(dados) {
     if (dados == null) return { texto: "" };
-    if (typeof dados === "string") return { texto: dados };
+    if (typeof dados === "string") return { texto: dados, campos: ["(texto puro)"] };
     if (Array.isArray(dados)) return extrairResposta(dados[0]);
     if (dados.json) return extrairResposta(dados.json);
     const texto =
@@ -59,6 +59,8 @@ window.Cerebro = (() => {
         dados.inlineData?.mimeType ||
         "audio/mpeg",
       audioUrl: dados.audioUrl || null,
+      // Campos recebidos, para diagnosticar quando o áudio não chega.
+      campos: Object.keys(dados),
     };
   }
 

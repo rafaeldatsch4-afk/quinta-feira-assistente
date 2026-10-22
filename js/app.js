@@ -202,6 +202,7 @@
   async function falar(texto, resposta = {}) {
     if (!cfg.falarRespostas) return null;
     let motivo = "o n8n não enviou áudio";
+    if (resposta.campos?.length) motivo += ` (veio só: ${resposta.campos.join(", ")})`;
     if (resposta.audio || resposta.audioUrl) {
       try { await tocarAudio(resposta); return { voz: "neural" }; }
       catch (e) { motivo = `o áudio do n8n não tocou (${e.message || e.name})`; }
@@ -514,7 +515,8 @@
       saida.className = "resultado-teste ok";
       const t = r.texto || "";
       const kb = r.audio ? Math.round((r.audio.length * 0.75) / 1024) : 0;
-      const voz = r.audio ? `🔊 voz neural recebida (${kb} KB)` : r.audioUrl ? "🔊 voz neural por link" : "🔈 sem áudio — voz do navegador";
+      const campos = r.campos?.length ? ` (veio só: ${r.campos.join(", ")})` : "";
+      const voz = r.audio ? `🔊 voz neural recebida (${kb} KB)` : r.audioUrl ? "🔊 voz neural por link" : `🔈 sem áudio${campos}`;
       saida.textContent = `✓ Conectado: "${t.slice(0, 40)}${t.length > 40 ? "…" : ""}" · ${voz}`;
     } catch (e) {
       saida.className = "resultado-teste falha";
