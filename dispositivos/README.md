@@ -122,6 +122,8 @@ por causa de um pedido antigo.
 | `nao_perturbe_desligar` | Audio → **Do Not Disturb** | Mode: Allow All |
 | `abrir_app` | App → **Launch App** | Package/App Name: `%pedido2` |
 | `abrir_site` | **Navegar URL** (*Browse URL*) | URL: `%pedido2` (o Android pode pedir "Exibir sobre outros apps") |
+| `abrir_app` | **Carregar App** (*Load App*) | App: `%pedido2` (nome do app, ex.: `whatsapp`) |
+| `alarme` | 1) **Dividir variável** `%pedido2` com divisor `:` (cria `%pedido21` hora e `%pedido22` minuto); 2) **Definir Alarme** (*Set Alarm*) | Horas: `%pedido21`, Minutos: `%pedido22` |
 | `midia_tocar_pausar` | **Controle de Mídia** (*Media Control*) | Cmd: alternar pausa (*Toggle Pause*) |
 | `midia_proxima` | **Controle de Mídia** | Cmd: próxima (*Next*) |
 | `midia_anterior` | **Controle de Mídia** | Cmd: anterior (*Previous*) |

@@ -6,13 +6,13 @@ window.Dispositivos = (() => {
   // Ações que o Tasker do celular já sabe executar. Acrescente aqui ao criar novas no Tasker.
   const ACOES_CELULAR = new Set([
     "lanterna_ligar", "lanterna_desligar", "volume_midia", "silencioso", "som_normal",
-    "abrir_site", "midia_tocar_pausar", "midia_proxima", "midia_anterior",
+    "abrir_site", "midia_tocar_pausar", "midia_proxima", "midia_anterior", "abrir_app", "alarme",
   ]);
 
   // Sites que ela abre pelo nome ("abre o youtube no celular").
   const SITES = {
     youtube: "https://www.youtube.com", google: "https://www.google.com", gmail: "https://mail.google.com",
-    github: "https://github.com", whatsapp: "https://web.whatsapp.com", spotify: "https://open.spotify.com",
+    github: "https://github.com", spotify: "https://open.spotify.com",
     instagram: "https://www.instagram.com", facebook: "https://www.facebook.com", netflix: "https://www.netflix.com",
     maps: "https://maps.google.com",
   };
@@ -71,6 +71,27 @@ window.Dispositivos = (() => {
     return n ? Math.min(15, Number(n[1])) : null;
   }
 
+  // Hora dita em português: "7h", "7:30", "6 e meia", "às 8 da noite". Devolve "HH:MM" ou null.
+  function horaDoAlarme(t, original) {
+    const o = String(original).toLowerCase();
+    let m = o.match(/\b(\d{1,2})\s*(?::|h|horas?)\s*(\d{2})?\b/) || o.match(/\bas\s+(\d{1,2})\b/) || t.match(/\bas (\d{1,2})\b/);
+    if (!m) m = t.match(/\b(\d{1,2}) e (meia|quinze|quarenta e cinco|trinta)\b/);
+    if (!m) return null;
+    let h = Number(m[1]);
+    let min = m[2] ? (/^\d+$/.test(m[2]) ? Number(m[2]) : ({ meia: 30, trinta: 30, quinze: 15, "quarenta e cinco": 45 }[m[2]] || 0)) : 0;
+    if (/\b(e meia)\b/.test(t) && !m[2]) min = 30;
+    if (/\b(da tarde|da noite)\b/.test(t) && h < 12) h += 12;
+    if (/\bda madrugada\b/.test(t) && h === 12) h = 0;
+    if (h > 23 || min > 59) return null;
+    return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+  }
+
+  // Nome de app seguro para mandar ao Tasker.
+  const nomeAppSeguro = (n) => {
+    const nome = String(n || "").trim().replace(/\s+/g, " ");
+    return /^[\p{L}\p{N} ._-]{1,40}$/u.test(nome) ? nome : null;
+  };
+
   // Comandos para o celular. Só entram ações que o Tasker já sabe fazer (ACOES_CELULAR).
   function comandoCelular(t, original) {
     const falaDoCelular = /\b(celular|telefone)\b/.test(t);
@@ -102,11 +123,23 @@ window.Dispositivos = (() => {
       const url = urlSegura(site[1]);
       if (url) return pedido("celular", "abrir_site", url, "Abrindo o site no celular.");
     }
-    const nomeSite = t.match(/\b(?:abre|abra|abrir)\s+(?:o |a )?(youtube|google|gmail|github|whatsapp|spotify|instagram|facebook|netflix|maps)\b/);
+    const nomeSite = t.match(/\b(?:abre|abra|abrir)\s+(?:o |a )?(youtube|google|gmail|github|spotify|instagram|facebook|netflix|maps)\b/);
     if (nomeSite && falaDoCelular) return pedido("celular", "abrir_site", SITES[nomeSite[1]], `Abrindo o ${nomeSite[1]} no celular.`);
+    const app = t.match(/\b(?:abre|abra|abrir)\s+(?:o |a )?(?:(?:app|aplicativo)\s+)?(.+?)(?:\s+no\s+(?:meu\s+)?(?:celular|telefone))?$/);
+    if (app && (falaDoCelular || /\b(app|aplicativo)\b/.test(t))) {
+      const nome = nomeAppSeguro(app[1].replace(/^(app|aplicativo)\s+/, "").replace(/^(do|da|de)\s+/, ""));
+      if (nome) return pedido("celular", "abrir_app", nome, `Abrindo ${nome}.`);
+    }
     const busca = orig.match(/pesquis(?:a|e|ar)\s+(.+?)\s+n[oa]\s+(?:meu\s+)?(?:celular|telefone)\b/);
     if (busca) {
       return pedido("celular", "abrir_site", "https://www.google.com/search?q=" + encodeURIComponent(busca[1]), "Pesquisando no celular.");
+    }
+
+    // alarme: "me acorda às 7h", "alarme para 7:30"
+    if (/\b(alarme|despertador|acorda|acordar|desperta|despertar)\b/.test(t)) {
+      const hora = horaDoAlarme(t, original);
+      if (!hora) return { resposta: "Para que horas? Diga, por exemplo, 7 horas ou 6 e meia." };
+      return pedido("celular", "alarme", hora, `Alarme marcado para ${hora}.`);
     }
 
     // música
@@ -216,12 +249,12 @@ window.Dispositivos = (() => {
     if (cfg.topicoCelular) {
       lista.push({
         name: "controlar_celular",
-        description: "Executa uma ação no celular Android do usuário: lanterna, volume de mídia, modo silencioso, som normal, abrir site e controle de música. Use quando ele pedir.",
+        description: "Executa uma ação no celular Android do usuário: lanterna, volume de mídia, modo silencioso, som normal, abrir site, abrir app, alarme e controle de música. Use quando ele pedir.",
         parameters: {
           type: "OBJECT",
           properties: {
             acao: { type: "STRING", description: "Ação a executar.", enum: [...ACOES_CELULAR] },
-            valor: { type: "STRING", description: "Para volume_midia: nível de 0 a 15. Para abrir_site: endereço do site. Vazio nas outras ações." },
+            valor: { type: "STRING", description: "Para volume_midia: nível de 0 a 15. Para abrir_site: endereço do site. Para abrir_app: nome do app (ex.: whatsapp). Para alarme: hora no formato HH:MM. Vazio nas outras ações." },
           },
           required: ["acao"],
         },
@@ -267,6 +300,15 @@ window.Dispositivos = (() => {
     if (alvo === "celular" && acao === "abrir_site") {
       valorFinal = urlSegura(valor);
       if (!valorFinal) return { erro: "Informe um endereço de site válido (http ou https)." };
+    }
+    if (alvo === "celular" && acao === "abrir_app") {
+      valorFinal = nomeAppSeguro(valor);
+      if (!valorFinal) return { erro: "Informe o nome do app." };
+    }
+    if (alvo === "celular" && acao === "alarme") {
+      const m = String(valor).match(/^(\d{1,2}):(\d{2})$/);
+      if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return { erro: "Informe a hora do alarme no formato HH:MM." };
+      valorFinal = `${m[1].padStart(2, "0")}:${m[2]}`;
     }
     if (alvo === "celular" && acao === "volume_midia") {
       const n = Number(valor);
