@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quinta-Feira</title>
+  <meta name="description" content="Interface da assistente virtual Quinta-Feira">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-estado="ocioso">
+  <div class="grade-fundo" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <header class="topo">
+    <div class="marca">
+      <span class="marca-icone" aria-hidden="true"></span>
+      <div>
+        <h1>QUINTA-FEIRA</h1>
+        <p class="marca-sub">Assistente Pessoal · v1.0</p>
+      </div>
+    </div>
+    <div class="topo-status">
+      <span class="pilula" id="status-n8n"><i></i><span>N8N</span></span>
+      <span class="pilula" id="status-rede"><i></i><span>ONLINE</span></span>
+      <span class="pilula" id="status-voz"><i></i><span>VOZ ATIVA</span></span>
+      <button class="botao-icone" id="botao-config" title="Configurações" aria-label="Configurações">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Painel esquerdo: sistema -->
+    <aside class="painel painel-esq">
+      <section class="cartao">
+        <h2 class="cartao-titulo">Hora local</h2>
+        <div class="relogio" id="relogio">00:00<span>:00</span></div>
+        <div class="data" id="data">—</div>
+      </section>
+
+      <section class="cartao">
+        <h2 class="cartao-titulo">Diagnóstico</h2>
+        <ul class="metricas">
+          <li>
+            <div class="metrica-rotulo"><span>Núcleo</span><b id="m-nucleo">0%</b></div>
+            <div class="barra"><i id="b-nucleo"></i></div>
+          </li>
+          <li>
+            <div class="metrica-rotulo"><span>Memória</span><b id="m-memoria">0%</b></div>
+            <div class="barra"><i id="b-memoria"></i></div>
+          </li>
+          <li>
+            <div class="metrica-rotulo"><span>Energia</span><b id="m-energia">—</b></div>
+            <div class="barra"><i id="b-energia"></i></div>
+          </li>
+          <li>
+            <div class="metrica-rotulo"><span>Sinal</span><b id="m-sinal">—</b></div>
+            <div class="barra"><i id="b-sinal"></i></div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="cartao">
+        <h2 class="cartao-titulo">Comandos rápidos</h2>
+        <div class="atalhos">
+          <button class="atalho" data-comando="Que horas são?">Horário</button>
+          <button class="atalho" data-comando="Que dia é hoje?">Data</button>
+          <button class="atalho" data-comando="Status do sistema">Status</button>
+          <button class="atalho" data-comando="Conte uma piada">Piada</button>
+          <button class="atalho" data-comando="Quanto é 15% de 240?">Calcular</button>
+          <button class="atalho" data-comando="Ajuda">Ajuda</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Centro: núcleo animado -->
+    <section class="centro">
+      <div class="nucleo-wrap">
+        <canvas id="nucleo" aria-hidden="true"></canvas>
+        <div class="nucleo-texto">
+          <span class="nucleo-nome">QUINTA-FEIRA</span>
+          <span class="nucleo-estado" id="rotulo-estado">Aguardando comando</span>
+        </div>
+      </div>
+      <p class="legenda" id="legenda" aria-live="polite"></p>
+    </section>
+
+    <!-- Painel direito: conversa -->
+    <aside class="painel painel-dir">
+      <section class="cartao cartao-chat">
+        <div class="chat-cabecalho">
+          <h2 class="cartao-titulo">Registro de conversa</h2>
+          <button class="link-botao" id="limpar-chat">Limpar</button>
+        </div>
+        <div class="chat" id="chat" role="log" aria-live="polite"></div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="console">
+    <form class="entrada" id="form-entrada" autocomplete="off">
+      <button type="button" class="botao-mic" id="botao-mic" title="Falar (Ctrl + Espaço)" aria-label="Falar">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4M8 22h8"/></svg>
+      </button>
+      <input type="text" id="campo" placeholder="Diga algo para a Quinta-Feira…" aria-label="Mensagem">
+      <button type="submit" class="botao-enviar" aria-label="Enviar">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+    <p class="dica">Ctrl + Espaço para falar · Enter para enviar</p>
+  </footer>
+
+  <!-- Configurações -->
+  <dialog class="modal" id="modal-config">
+    <form method="dialog" class="modal-corpo" id="form-config">
+      <h2>Configurações</h2>
+
+      <label class="campo-config">
+        <span>Seu nome</span>
+        <input type="text" name="nomeUsuario" placeholder="Chefe">
+      </label>
+
+      <label class="campo-config">
+        <span>Webhook do n8n</span>
+        <input type="url" name="webhookUrl" placeholder="https://seu-n8n.com/webhook/quinta-feira">
+        <small>URL de produção do nó <b>Webhook</b> do seu workflow. Sem ela, a Quinta-Feira roda em modo offline com respostas básicas.</small>
+      </label>
+
+      <label class="campo-config">
+        <span>Token de autenticação (opcional)</span>
+        <input type="password" name="token" placeholder="Enviado no cabeçalho Authorization">
+        <small>Use com <i>Header Auth</i> no Webhook do n8n para que só você acesse.</small>
+      </label>
+
+      <div class="linha-teste">
+        <button type="button" class="botao-sec" id="testar-n8n">Testar conexão</button>
+        <span class="resultado-teste" id="resultado-teste"></span>
+      </div>
+
+      <label class="campo-config">
+        <span>Voz</span>
+        <select name="voz" id="select-voz"></select>
+      </label>
+
+      <div class="linha-config">
+        <label class="campo-config">
+          <span>Velocidade <output id="out-vel">1.0</output></span>
+          <input type="range" name="velocidade" min="0.6" max="1.6" step="0.1" value="1">
+        </label>
+        <label class="campo-config">
+          <span>Tom <output id="out-tom">1.0</output></span>
+          <input type="range" name="tom" min="0.5" max="1.8" step="0.1" value="1">
+        </label>
+      </div>
+
+      <label class="campo-check">
+        <input type="checkbox" name="falarRespostas" checked>
+        <span>Ler respostas em voz alta</span>
+      </label>
+
+      <div class="modal-acoes">
+        <button value="cancelar" class="botao-sec">Cancelar</button>
+        <button value="salvar" class="botao-pri">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/config.js"></script>
+  <script src="js/nucleo.js"></script>
+  <script src="js/cerebro.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
