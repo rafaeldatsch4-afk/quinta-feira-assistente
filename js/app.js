@@ -153,6 +153,9 @@
     const bin = atob(b64.replace(/\s/g, ""));
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    // Se já vier com cabeçalho WAV (ex.: LINEAR16 do Google Cloud), toca como está.
+    const ehWav = bytes.length > 12 && String.fromCharCode(...bytes.subarray(0, 4)) === "RIFF";
+    if (ehWav) return new Blob([bytes], { type: "audio/wav" });
     if (/l16|pcm/i.test(mime)) {
       return pcmParaWav(bytes, Number(/rate=(\d+)/i.exec(mime)?.[1]) || 24000);
     }

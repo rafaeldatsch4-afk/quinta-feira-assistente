@@ -83,7 +83,8 @@ O estilo da fala vai em `style`; o campo `text` é lido ao pé da letra.
 > no nó `Gerar voz`, confira o modelo e o formato em <https://ai.google.dev/gemini-api/docs/speech-generation>.
 
 A interface aceita o áudio em `audio/wav`, `audio/mpeg` (MP3) ou PCM cru (`audio/L16;rate=24000`),
-em base64, ou um link em `audioUrl`. Serve para ElevenLabs, OpenAI TTS ou qualquer outro serviço.
+em base64 (campo `audio` ou `audioContent`, como no Google Cloud Text-to-Speech), ou um link em
+`audioUrl`. O tipo pode vir em `audioMime` (`"audio/mpeg"`) ou em `audioFormat` (`"mp3"`, `"wav"`, `"LINEAR16"`). Serve para ElevenLabs, OpenAI TTS ou qualquer outro serviço.
 Se a resposta não trouxer áudio, a interface usa a voz do navegador como reserva.
 
 ### O que a interface envia

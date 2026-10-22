@@ -27,6 +27,16 @@ window.Cerebro = (() => {
 
   /* ---------------- n8n ---------------- */
 
+  // Converte "mp3", "wav", "LINEAR16"... (campo audioFormat) em tipo MIME.
+  function mimeDoFormato(formato) {
+    const f = String(formato).toLowerCase().replace(/^audio\//, "");
+    if (f === "mp3" || f === "mpeg") return "audio/mpeg";
+    if (f === "wav" || f === "wave") return "audio/wav";
+    if (f.startsWith("ogg") || f === "opus") return "audio/ogg";
+    if (f === "linear16" || f === "l16" || f === "pcm") return "audio/L16;rate=24000";
+    return `audio/${f}`;
+  }
+
   // Aceita os formatos mais comuns de resposta do n8n:
   // { output }, { resposta }, { text }, [ { output } ], ou texto puro.
   function extrairResposta(dados) {
@@ -41,8 +51,13 @@ window.Cerebro = (() => {
       texto: typeof texto === "string" ? texto : JSON.stringify(texto),
       acao: dados.acao || dados.action || null,
       // Voz neural gerada no n8n: base64 (ou data: URL) ou um link para o arquivo.
-      audio: dados.audio || dados.audioBase64 || null,
-      audioMime: dados.audioMime || "audio/mpeg",
+      // "audioContent" é o nome usado pelo Google Cloud Text-to-Speech.
+      audio: dados.audio || dados.audioBase64 || dados.audioContent || dados.inlineData?.data || null,
+      audioMime:
+        dados.audioMime ||
+        (dados.audioFormat ? mimeDoFormato(dados.audioFormat) : null) ||
+        dados.inlineData?.mimeType ||
+        "audio/mpeg",
       audioUrl: dados.audioUrl || null,
     };
   }
