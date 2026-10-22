@@ -115,9 +115,9 @@ por causa de um pedido antigo.
 |---|---|---|
 | `lanterna_ligar` | Alert → **Torch** | Set: On |
 | `lanterna_desligar` | Alert → **Torch** | Set: Off |
-| `volume_midia` | Audio → **Media Volume** | Level: `%pedido2` (0 a 15) |
-| `silencioso` | Audio → **Sound Mode** | Mode: Silent |
-| `som_normal` | Audio → **Sound Mode** | Mode: Sound |
+| `volume_midia` | **Volume de mídia** (*Media Volume*) | Nível: `%pedido2` (0 a 15) |
+| `silencioso` | **Modo de Som** (*Sound Mode*) | Modo: **Mute** (pede a permissão de Não perturbe) |
+| `som_normal` | **Modo de Som** (*Sound Mode*) | Modo: **Sound** |
 | `nao_perturbe_ligar` | Audio → **Do Not Disturb** | Mode: Priority |
 | `nao_perturbe_desligar` | Audio → **Do Not Disturb** | Mode: Allow All |
 | `abrir_app` | App → **Launch App** | Package/App Name: `%pedido2` |
@@ -126,6 +126,10 @@ por causa de um pedido antigo.
 | `midia_proxima` | Media → **Media Control** | Cmd: Next |
 | `midia_anterior` | Media → **Media Control** | Cmd: Previous |
 | `alarme` | Variable Split `%pedido2` com `:` e depois App → **Set Alarm** | Hours: `%pedido21`, Minutes: `%pedido22` |
+
+**Testado no celular:** lanterna, volume de mídia, silencioso e som normal. Atenção: toda ação precisa
+ter a sua condição *Se*. Uma ação sem condição roda em toda mensagem (ex.: um **Mute** solto deixa o
+celular mudo a cada comando).
 
 **Dicas (testadas no Tasker em português):**
 - O campo **Ação** do evento é o primeiro da tela; não toque no ícone de etiqueta ao lado (abre a lista de variáveis).
