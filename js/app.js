@@ -166,7 +166,8 @@
     if (grafoAudio !== null) return;
     try {
       const ac = new (window.AudioContext || window.webkitAudioContext)();
-      await ac.resume();
+      // resume() pode ficar pendente se o navegador não liberar o áudio; não espera mais que 600 ms.
+      await Promise.race([ac.resume(), new Promise((r) => setTimeout(r, 600))]);
       // Só passa o som pelo analisador se o contexto estiver ativo; senão o áudio sairia mudo.
       grafoAudio = ac.state === "running" ? window.Nucleo.conectarElemento(player, ac) || false : false;
       if (!grafoAudio) ac.close();
@@ -197,13 +198,25 @@
     });
   }
 
+  // Fala a resposta e devolve qual voz foi usada, para a interface mostrar no chat.
   async function falar(texto, resposta = {}) {
-    if (!cfg.falarRespostas) return;
+    if (!cfg.falarRespostas) return null;
+    let motivo = "o n8n não enviou áudio";
     if (resposta.audio || resposta.audioUrl) {
-      try { return await tocarAudio(resposta); }
-      catch (_) { /* cai para a voz do navegador */ }
+      try { await tocarAudio(resposta); return { voz: "neural" }; }
+      catch (e) { motivo = `o áudio do n8n não tocou (${e.message || e.name})`; }
     }
-    return falarNavegador(texto);
+    await falarNavegador(texto);
+    return { voz: "navegador", motivo };
+  }
+
+  function marcarVoz(msg, info) {
+    if (!info || !msg) return;
+    const nota = document.createElement("span");
+    nota.className = "msg-voz" + (info.voz === "neural" ? " ok" : "");
+    nota.textContent = info.voz === "neural" ? "🔊 voz neural" : `🔈 voz do navegador — ${info.motivo}`;
+    msg.append(nota);
+    el.chat.scrollTop = el.chat.scrollHeight;
   }
 
   function pararFala() {
@@ -239,14 +252,15 @@
       const r = await window.Cerebro.perguntar(texto);
       digitando.remove();
       if (r.erro) adicionarMensagem("ia", `⚠ ${r.erro}`, "erro");
+      let msgResposta = null;
       if (r.texto) {
-        adicionarMensagem("ia", r.texto);
+        msgResposta = adicionarMensagem("ia", r.texto);
         el.legenda.textContent = r.texto.length > 220 ? r.texto.slice(0, 217) + "…" : r.texto;
       }
       executarAcao(r.acao);
       definirEstado("ocioso");
       ocupado = false;
-      falar(r.texto, r);
+      falar(r.texto, r).then((info) => marcarVoz(msgResposta, info));
     } catch (e) {
       digitando.remove();
       adicionarMensagem("ia", `⚠ ${e.message}`, "erro");
@@ -495,7 +509,10 @@
     try {
       const r = await window.Cerebro.testarConexao(url, authDoFormulario());
       saida.className = "resultado-teste ok";
-      saida.textContent = `✓ Conectado: "${r.slice(0, 60)}${r.length > 60 ? "…" : ""}"`;
+      const t = r.texto || "";
+      const kb = r.audio ? Math.round((r.audio.length * 0.75) / 1024) : 0;
+      const voz = r.audio ? `🔊 voz neural recebida (${kb} KB)` : r.audioUrl ? "🔊 voz neural por link" : "🔈 sem áudio — voz do navegador";
+      saida.textContent = `✓ Conectado: "${t.slice(0, 40)}${t.length > 40 ? "…" : ""}" · ${voz}`;
     } catch (e) {
       saida.className = "resultado-teste falha";
       saida.textContent = `✗ ${e.message}`;

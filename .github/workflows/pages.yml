@@ -24,6 +24,8 @@ jobs:
           mkdir _site
           cp -r index.html css js _site/
           touch _site/.nojekyll
+          # Carimba os arquivos com a versão, para o navegador não usar cópia antiga.
+          sed -i -E "s#(src|href)=\"((js|css)/[a-z-]+\.(js|css))\"#\1=\"\2?v=${GITHUB_SHA::7}\"#g" _site/index.html
 
       - name: Envia para o branch gh-pages
         working-directory: _site

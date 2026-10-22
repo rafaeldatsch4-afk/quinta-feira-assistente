@@ -274,8 +274,7 @@ window.Cerebro = (() => {
   }
 
   async function testarConexao(url, auth) {
-    const r = await chamarN8n("ping", { url, auth });
-    return r.texto;
+    return chamarN8n("ping", { url, auth });
   }
 
   return {
