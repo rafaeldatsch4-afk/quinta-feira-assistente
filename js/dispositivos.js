@@ -19,6 +19,9 @@ window.Dispositivos = (() => {
 
   const pedido = (alvo, acao, valor, resposta) => ({ alvo, acao, valor, resposta });
 
+  // O ntfy só aceita letras, números, "-" e "_". Tira espaços e pontuação que vêm ao copiar e colar.
+  const limparTopico = (t) => String(t || "").replace(/[^A-Za-z0-9_-]/g, "");
+
   function confirmar(p, pergunta) {
     pendente = { pedido: p, expira: Date.now() + 30000 };
     return { resposta: pergunta };
@@ -91,7 +94,7 @@ window.Dispositivos = (() => {
   }
 
   async function enviar(alvo, acao, valor = "", topicoForcado = "") {
-    const topico = topicoForcado || (alvo === "pc" ? cfg.topicoPc : cfg.topicoCelular);
+    const topico = limparTopico(topicoForcado || (alvo === "pc" ? cfg.topicoPc : cfg.topicoCelular));
     if (!topico) throw new Error(`Defina o tópico do ${alvo === "pc" ? "PC" : "celular"} em Configurações.`);
     if (alvo === "celular" && !ACOES_CELULAR.has(acao)) {
       throw new Error(`A ação "${acao}" ainda não está configurada no Tasker.`);
@@ -105,8 +108,11 @@ window.Dispositivos = (() => {
       throw new Error("Não consegui falar com o ntfy. Confira a internet.");
     }
     if (res.status === 429) throw new Error("O ntfy bloqueou por excesso de mensagens (limite diário). Tente mais tarde.");
+    if (res.status === 404 || res.status === 400) {
+      throw new Error(`O ntfy não aceitou o tópico "${topico}" (erro ${res.status}). Confira o nome em Configurações.`);
+    }
     if (!res.ok) throw new Error(`O ntfy respondeu ${res.status}.`);
   }
 
-  return { interpretar, enviar };
+  return { interpretar, enviar, limparTopico };
 })();

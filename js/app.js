@@ -535,7 +535,8 @@
 
   $("#testar-celular").addEventListener("click", async () => {
     const saida = $("#resultado-celular");
-    const topico = f.topicoCelular.value.trim();
+    const topico = window.Dispositivos.limparTopico(f.topicoCelular.value);
+    f.topicoCelular.value = topico;
     if (!topico) { saida.className = "resultado-teste falha"; saida.textContent = "Informe o tópico do celular."; return; }
     saida.className = "resultado-teste"; saida.textContent = "Enviando…";
     const servidor = cfg.ntfyServidor;
@@ -560,8 +561,8 @@
       nomeUsuario: f.nomeUsuario.value.trim() || "Chefe",
       webhookUrl: f.webhookUrl.value.trim(),
       ...authDoFormulario(),
-      topicoCelular: f.topicoCelular.value.trim(),
-      topicoPc: f.topicoPc.value.trim(),
+      topicoCelular: window.Dispositivos.limparTopico(f.topicoCelular.value),
+      topicoPc: window.Dispositivos.limparTopico(f.topicoPc.value),
       ntfyServidor: f.ntfyServidor.value.trim() || "https://ntfy.sh",
       geminiKey: f.geminiKey.value.trim(),
       liveModelo: f.liveModelo.value.trim() || "gemini-3.8-live",
