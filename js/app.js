@@ -336,7 +336,7 @@
   }
 
   function ouvir() {
-    if (!Reconhecimento || ouvindo) return;
+    if (!Reconhecimento || ouvindo || window.Live.ativo) return;
     pararFala();
     rec = new Reconhecimento();
     rec.lang = cfg.idioma;
@@ -387,6 +387,7 @@
       ouvindo ? pararDeOuvir() : ouvir();
     } else if (e.key === "Escape") {
       abrirMenu(false);
+      if (window.Live.ativo) window.Live.parar();
       pararFala();
       pararDeOuvir();
     }
@@ -492,6 +493,8 @@
     f.authUsuario.value = cfg.authUsuario;
     f.authSenha.value = cfg.authSenha;
     f.token.value = cfg.token;
+    f.geminiKey.value = cfg.geminiKey || "";
+    f.liveModelo.value = cfg.liveModelo || "gemini-3.8-live";
     mostrarCamposAuth();
     f.velocidade.value = cfg.velocidade; outVel.textContent = Number(cfg.velocidade).toFixed(1);
     f.tom.value = cfg.tom; outTom.textContent = Number(cfg.tom).toFixed(1);
@@ -526,12 +529,68 @@
       nomeUsuario: f.nomeUsuario.value.trim() || "Chefe",
       webhookUrl: f.webhookUrl.value.trim(),
       ...authDoFormulario(),
+      geminiKey: f.geminiKey.value.trim(),
+      liveModelo: f.liveModelo.value.trim() || "gemini-3.8-live",
       voz: f.voz.value,
       velocidade: Number(f.velocidade.value),
       tom: Number(f.tom.value),
       falarRespostas: f.falarRespostas.checked,
     });
     atualizarStatus();
+  });
+
+  /* ---------------- Modo Live (Gemini em tempo real) ---------------- */
+
+  const botaoLive = $("#botao-live");
+  let msgLive = { usuario: null, ia: null };
+
+  function textoLive(papel, trecho) {
+    if (!msgLive[papel]) msgLive[papel] = adicionarMensagem(papel === "usuario" ? "usuario" : "ia", "");
+    const corpo = msgLive[papel].querySelector(".msg-texto");
+    corpo.textContent += trecho;
+    if (papel === "ia") el.legenda.textContent = corpo.textContent.slice(-220);
+    el.chat.scrollTop = el.chat.scrollHeight;
+  }
+
+  function estadoLive(st) {
+    const ligado = st !== "parado";
+    botaoLive.classList.toggle("ativo", ligado);
+    botaoLive.setAttribute("aria-pressed", String(ligado));
+    if (!ligado) {
+      window.Nucleo.usarAnalisador(null);
+      definirEstado("ocioso");
+      el.legenda.textContent = "Modo Live encerrado.";
+      msgLive = { usuario: null, ia: null };
+      return;
+    }
+    definirEstado(st === "falando" ? "falando" : "ouvindo");
+    window.Nucleo.usarAnalisador(st === "falando" ? window.Live.analisadorSaida : window.Live.analisadorEntrada);
+    if (st === "ouvindo" && !msgLive.ia) el.legenda.textContent = "Live ligado — pode falar. Toque em LIVE para encerrar.";
+  }
+
+  botaoLive.addEventListener("click", async () => {
+    if (window.Live.ativo) { window.Live.parar(); return; }
+    if (botaoLive.classList.contains("conectando")) return;
+    pararFala();
+    pararDeOuvir();
+    el.legenda.classList.remove("parcial");
+    el.legenda.textContent = "Conectando ao modo Live…";
+    botaoLive.classList.add("conectando");
+    try {
+      await window.Live.iniciar({
+        estado: estadoLive,
+        texto: textoLive,
+        fimTurno: () => { msgLive = { usuario: null, ia: null }; },
+        aviso: (t) => adicionarMensagem("ia", `⚠ ${t}`, "erro"),
+      });
+    } catch (e) {
+      window.Live.parar();
+      adicionarMensagem("ia", `⚠ ${e.message}`, "erro");
+      el.legenda.textContent = "";
+      definirEstado("ocioso");
+    } finally {
+      botaoLive.classList.remove("conectando");
+    }
   });
 
   /* ---------------- Início ---------------- */

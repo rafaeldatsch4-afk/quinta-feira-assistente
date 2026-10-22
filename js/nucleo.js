@@ -183,6 +183,11 @@ window.Nucleo = (() => {
         };
       } catch (_) { return null; }
     },
+    // Usa um analisador já pronto (modo Live). null desliga.
+    usarAnalisador(an) {
+      analisador = an || null;
+      dadosAudio = an ? new Uint8Array(an.frequencyBinCount) : null;
+    },
     conectarAudio(stream) {
       try {
         const ac = new (window.AudioContext || window.webkitAudioContext)();

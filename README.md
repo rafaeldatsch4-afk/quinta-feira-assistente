@@ -87,6 +87,22 @@ em base64 (campo `audio` ou `audioContent`, como no Google Cloud Text-to-Speech)
 `audioUrl`. O tipo pode vir em `audioMime` (`"audio/mpeg"`) ou em `audioFormat` (`"mp3"`, `"wav"`, `"LINEAR16"`). Serve para ElevenLabs, OpenAI TTS ou qualquer outro serviço.
 Se a resposta não trouxer áudio, a interface usa a voz do navegador como reserva.
 
+### Modo Live (conversa em tempo real)
+
+O botão **LIVE** abre uma conversa por voz em tempo real direto com o **Gemini Live API**,
+sem passar pelo n8n: você fala, ela responde na hora com voz natural, e dá para interromper
+falando por cima. A conversa aparece escrita no chat (transcrição).
+
+1. Pegue uma chave em <https://aistudio.google.com/apikey>.
+2. Em Configurações → **Modo Live (Gemini)**, cole a chave em **Chave do Google**.
+   O modelo padrão é `gemini-3.8-live`.
+3. Toque em **LIVE** para começar e de novo para encerrar.
+
+No modo Live o n8n não é usado, então ferramentas e memória do workflow não valem ali.
+A chave fica salva só no navegador; o Google recomenda tokens temporários para apps
+públicos, mas para uso pessoal a chave direta funciona. No plano gratuito do Gemini API,
+o modelo Live aparece como gratuito.
+
 ### O que a interface envia
 
 `POST` com JSON:
@@ -145,6 +161,7 @@ css/style.css                  visual (HUD)
 js/config.js                   configurações padrão e persistência
 js/nucleo.js                   animação do núcleo (canvas)
 js/cerebro.js                  integração com o n8n + modo offline
+js/live.js                     modo Live (Gemini Live API em tempo real)
 js/app.js                      voz, chat, painéis e configurações
 n8n/quinta-feira-workflow.json workflow de exemplo para importar
 ```

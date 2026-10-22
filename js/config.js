@@ -12,6 +12,10 @@ window.QF_PADRAO = {
   authUsuario: "",
   authSenha: "",
   token: "",
+  // Modo Live (conversa em tempo real direto com o Gemini, sem n8n).
+  // A chave fica só no navegador; preencha pela tela de Configurações.
+  geminiKey: "",
+  liveModelo: "gemini-3.8-live",
   voz: "",
   velocidade: 1,
   tom: 1,

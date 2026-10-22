@@ -125,12 +125,13 @@
       <button type="button" class="botao-mic" id="botao-mic" title="Falar (Ctrl + Espaço)" aria-label="Falar">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4M8 22h8"/></svg>
       </button>
+      <button type="button" class="botao-live" id="botao-live" title="Modo Live: conversa em tempo real" aria-label="Modo Live" aria-pressed="false">LIVE</button>
       <input type="text" id="campo" placeholder="Diga algo para a Quinta-Feira…" aria-label="Mensagem">
       <button type="submit" class="botao-enviar" aria-label="Enviar">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
     </form>
-    <p class="dica">Ctrl + Espaço para falar · Enter para enviar</p>
+    <p class="dica">Ctrl + Espaço para falar · LIVE para conversar em tempo real · Enter para enviar</p>
   </footer>
 
   <!-- Configurações -->
@@ -176,6 +177,19 @@
         <small>No n8n, a credencial Header Auth deve ter Name <code>Authorization</code> e Value <code>Bearer SEU_TOKEN</code>.</small>
       </label>
 
+      <fieldset class="grupo-config">
+        <legend>Modo Live (Gemini)</legend>
+        <label class="campo-config">
+          <span>Chave do Google</span>
+          <input type="password" name="geminiKey" autocomplete="off" placeholder="Chave do Google AI Studio">
+          <small>Conversa por voz em tempo real direto com o Gemini, sem passar pelo n8n. A chave fica salva só neste navegador.</small>
+        </label>
+        <label class="campo-config">
+          <span>Modelo</span>
+          <input type="text" name="liveModelo" placeholder="gemini-3.8-live">
+        </label>
+      </fieldset>
+
       <div class="linha-teste">
         <button type="button" class="botao-sec" id="testar-n8n">Testar conexão</button>
         <span class="resultado-teste" id="resultado-teste"></span>
@@ -216,6 +230,7 @@
   <script src="js/config.js"></script>
   <script src="js/nucleo.js"></script>
   <script src="js/cerebro.js"></script>
+  <script src="js/live.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
