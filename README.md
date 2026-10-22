@@ -45,28 +45,45 @@ Webhook (POST) ──► AI Agent ──► Respond to Webhook
                     └─ Memória (por sessionId)
 ```
 
-### Voz neural (recomendado)
+### Voz neural com Gemini (recomendado)
 
 A voz do navegador costuma soar robótica, principalmente no Android. Para uma voz
-natural, o n8n gera o áudio e a interface toca. O workflow de exemplo já faz isso:
+natural, o n8n gera o áudio com o **Gemini TTS** e a interface toca. O workflow de
+exemplo já faz isso e usa a mesma credencial *Google Gemini(PaLM) API* do agente:
 
 ```
-AI Agent ──► Gerar voz (OpenAI, voz "nova") ──► Áudio em base64 ──► Responder
+AI Agent ──► Gerar voz (HTTP Request → Gemini TTS) ──► Responder
 ```
 
 Para adicionar num workflow que já existe, entre o **AI Agent** e o **Respond to Webhook**:
 
-1. Nó **OpenAI → Generate audio** (Text to speech): *Text Input* `{{ $json.output }}`,
-   *Voice* `Nova` ou `Shimmer` (femininas), *Model* `tts-1`.
-2. Nó **Extract from File → Move File to Base64 String**: *Input Binary Field* `data`,
-   *Destination Output Field* `audio`.
-3. No **Respond to Webhook** (Respond With: JSON):
+1. Nó **HTTP Request**, nome `Gerar voz`:
+   - *Method* `POST`, *URL* `https://generativelanguage.googleapis.com/v1beta/interactions`
+   - *Authentication* **Predefined Credential Type** → *Google Gemini(PaLM) API* (a mesma do agente)
+   - *Send Body* ligado, *Body Content Type* JSON, *Specify Body* **Using JSON**, com:
+     ```
+     {{ { "model": "gemini-3.8-flash-tts",
+          "input": [{ "type": "user_input", "content": [{ "type": "text", "text": $json.output,
+            "annotations": [{ "type": "speech_metadata", "style": "natural, simpática e confiante, em português do Brasil" }] }] }],
+          "response_format": { "type": "audio", "mime_type": "audio/wav" },
+          "generation_config": { "speech_config": [{ "voice": "Kore" }] } } }}
+     ```
+   - Em *Settings*, **On Error** → *Continue* (assim, se a voz falhar, a interface usa a do navegador).
+2. No **Respond to Webhook** (Respond With: JSON):
    ```
-   {{ { "output": $('AI Agent').item.json.output, "audio": $json.audio, "audioMime": "audio/mpeg" } }}
+   {{ { "output": $('AI Agent').item.json.output,
+        "audio": ($json.steps || []).filter(s => s.type === 'model_output').flatMap(s => s.content || []).filter(c => c.type === 'audio').map(c => c.data).pop() || null,
+        "audioMime": "audio/wav" } }}
    ```
 
-Também funciona com ElevenLabs ou outro serviço de voz (via *HTTP Request* devolvendo
-o arquivo): basta responder com `audio` em base64, ou com `audioUrl` apontando para um MP3.
+Vozes para testar (troque `Kore`): `Kore`, `Aoede`, `Leda`, `Zephyr`, `Sulafat`, `Achernar`.
+O estilo da fala vai em `style`; o campo `text` é lido ao pé da letra.
+
+> Os nomes de modelo e o formato da API de voz do Gemini mudam com frequência. Se der erro
+> no nó `Gerar voz`, confira o modelo e o formato em <https://ai.google.dev/gemini-api/docs/speech-generation>.
+
+A interface aceita o áudio em `audio/wav`, `audio/mpeg` (MP3) ou PCM cru (`audio/L16;rate=24000`),
+em base64, ou um link em `audioUrl`. Serve para ElevenLabs, OpenAI TTS ou qualquer outro serviço.
 Se a resposta não trouxer áudio, a interface usa a voz do navegador como reserva.
 
 ### O que a interface envia

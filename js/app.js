@@ -134,12 +134,28 @@
   let grafoAudio = null;   // liga o player ao núcleo animado
   let urlAudio = null;
 
+  // PCM de 16 bits sem cabeçalho (audio/L16) não toca no navegador; embrulha em WAV.
+  function pcmParaWav(pcm, taxa) {
+    const wav = new DataView(new ArrayBuffer(44 + pcm.length));
+    const texto = (pos, s) => [...s].forEach((c, i) => wav.setUint8(pos + i, c.charCodeAt(0)));
+    texto(0, "RIFF"); wav.setUint32(4, 36 + pcm.length, true); texto(8, "WAVEfmt ");
+    wav.setUint32(16, 16, true); wav.setUint16(20, 1, true); wav.setUint16(22, 1, true);
+    wav.setUint32(24, taxa, true); wav.setUint32(28, taxa * 2, true);
+    wav.setUint16(32, 2, true); wav.setUint16(34, 16, true);
+    texto(36, "data"); wav.setUint32(40, pcm.length, true);
+    new Uint8Array(wav.buffer).set(pcm, 44);
+    return new Blob([wav], { type: "audio/wav" });
+  }
+
   function base64ParaBlob(b64, mime) {
-    const m = b64.match(/^data:([^;]+);base64,(.*)$/);
+    const m = b64.match(/^data:([^;]+(?:;[^;,]+)*);base64,(.*)$/);
     if (m) { mime = m[1]; b64 = m[2]; }
     const bin = atob(b64.replace(/\s/g, ""));
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    if (/l16|pcm/i.test(mime)) {
+      return pcmParaWav(bytes, Number(/rate=(\d+)/i.exec(mime)?.[1]) || 24000);
+    }
     return new Blob([bytes], { type: mime });
   }
 

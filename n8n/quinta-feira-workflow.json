@@ -39,17 +39,12 @@
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "mode": "list",
-          "value": "gpt-4o-mini"
-        },
         "options": {}
       },
       "id": "a1f0c6c2-0003-4c1e-9a10-000000000003",
       "name": "Modelo de Chat",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
       "position": [
         180,
         220
@@ -72,44 +67,31 @@
     },
     {
       "parameters": {
-        "resource": "audio",
-        "operation": "generate",
-        "model": "tts-1",
-        "input": "={{ $json.output }}",
-        "voice": "nova",
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/interactions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"gemini-3.8-flash-tts\", \"input\": [{ \"type\": \"user_input\", \"content\": [{ \"type\": \"text\", \"text\": $json.output, \"annotations\": [{ \"type\": \"speech_metadata\", \"style\": \"natural, simpática e confiante, em português do Brasil\" }] }] }], \"response_format\": { \"type\": \"audio\", \"mime_type\": \"audio/wav\" }, \"generation_config\": { \"speech_config\": [{ \"voice\": \"Kore\" }] } } }}",
         "options": {
-          "response_format": "mp3"
+          "timeout": 60000
         }
       },
       "id": "a1f0c6c2-0006-4c1e-9a10-000000000006",
       "name": "Gerar voz",
-      "type": "@n8n/n8n-nodes-langchain.openAi",
-      "typeVersion": 1.8,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         560,
         0
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "binaryToPropery",
-        "binaryPropertyName": "data",
-        "destinationKey": "audio",
-        "options": {}
-      },
-      "id": "a1f0c6c2-0007-4c1e-9a10-000000000007",
-      "name": "Áudio em base64",
-      "type": "n8n-nodes-base.extractFromFile",
-      "typeVersion": 1,
-      "position": [
-        800,
-        0
-      ]
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"output\": $('AI Agent').item.json.output, \"audio\": $json.audio, \"audioMime\": \"audio/mpeg\" } }}",
+        "responseBody": "={{ { \"output\": $('AI Agent').item.json.output, \"audio\": ($json.steps || []).filter(s => s.type === 'model_output').flatMap(s => s.content || []).filter(c => c.type === 'audio').map(c => c.data).pop() || null, \"audioMime\": \"audio/wav\" } }}",
         "options": {}
       },
       "id": "a1f0c6c2-0005-4c1e-9a10-000000000005",
@@ -117,7 +99,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1040,
+        820,
         0
       ]
     }
@@ -168,17 +150,6 @@
       ]
     },
     "Gerar voz": {
-      "main": [
-        [
-          {
-            "node": "Áudio em base64",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Áudio em base64": {
       "main": [
         [
           {
