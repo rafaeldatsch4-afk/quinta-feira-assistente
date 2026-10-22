@@ -4,7 +4,7 @@ window.Dispositivos = (() => {
   const cfg = window.QF_CONFIG;
 
   // Ações que o Tasker do celular já sabe executar. Acrescente aqui ao criar novas no Tasker.
-  const ACOES_CELULAR = new Set(["lanterna_ligar", "lanterna_desligar"]);
+  const ACOES_CELULAR = new Set(["lanterna_ligar", "lanterna_desligar", "volume_midia", "silencioso", "som_normal"]);
 
   // Ações que o Quinta-PC aceita (quinta_pc.py). Desligar/reiniciar exigem confirmação.
   const ACOES_PC = new Set([
@@ -34,6 +34,42 @@ window.Dispositivos = (() => {
     return { resposta: pergunta };
   }
 
+  // Nível de volume de mídia (0 a 15) dito em número, porcentagem, "máximo" ou "mínimo".
+  function nivelVolume(t, original) {
+    const pct = String(original).toLowerCase().match(/(\d{1,3})\s*(?:%|por\s?cento)/);
+    if (pct) return Math.round((Math.min(100, Number(pct[1])) / 100) * 15);
+    if (/\b(maximo|maxima|total)\b/.test(t)) return 15;
+    if (/\b(minimo|minima|zero)\b/.test(t)) return 0;
+    const n = t.match(/\b(\d{1,2})\b/);
+    return n ? Math.min(15, Number(n[1])) : null;
+  }
+
+  // Comandos para o celular. Só entram ações que o Tasker já sabe fazer (ACOES_CELULAR).
+  function comandoCelular(t, original) {
+    const falaDoCelular = /\b(celular|telefone)\b/.test(t);
+
+    if (/\blanterna\b/.test(t)) {
+      if (reDesligar.test(t)) return pedido("celular", "lanterna_desligar", "", "Lanterna apagada.");
+      if (reLigar.test(t)) return pedido("celular", "lanterna_ligar", "", "Lanterna ligada.");
+    }
+
+    const saiDoSilencioso = /\b(tira|tire|tirar|sai|saia|sair|desativa|desative|desativar|desliga|desligue|desligar|volta|volte)\b/;
+    if (/\bsilencioso\b/.test(t) || (falaDoCelular && reMudo.test(t))) {
+      if (saiDoSilencioso.test(t)) return pedido("celular", "som_normal", "", "Som do celular de volta ao normal.");
+      return pedido("celular", "silencioso", "", "Celular no silencioso.");
+    }
+    if (/\bsom normal\b/.test(t) || (falaDoCelular && /\b(volta|ativa|ative|ligar|liga|ligue)\b.*\bsom\b/.test(t))) {
+      return pedido("celular", "som_normal", "", "Som do celular de volta ao normal.");
+    }
+
+    if (falaDoCelular && /\bvolume\b/.test(t)) {
+      const nivel = nivelVolume(t, original);
+      if (nivel === null) return { resposta: "Qual volume você quer? Diga um número de 0 a 15 ou uma porcentagem." };
+      return pedido("celular", "volume_midia", String(nivel), `Volume do celular em ${nivel}.`);
+    }
+    return null;
+  }
+
   function interpretar(texto) {
     const t = norm(texto);
     if (!t) return null;
@@ -50,12 +86,14 @@ window.Dispositivos = (() => {
     const noPc = rePc.test(t);
 
     // ----- celular
-    if (!noPc && /\blanterna\b/.test(t) && (reDesligar.test(t) || reLigar.test(t))) {
-      if (!cfg.topicoCelular) {
-        return { resposta: "Ainda não sei falar com o seu celular. Abra a engrenagem, preencha o tópico do celular em Dispositivos e toque em Salvar." };
+    if (!noPc) {
+      const c = comandoCelular(t, texto);
+      if (c) {
+        if (!cfg.topicoCelular) {
+          return { resposta: "Ainda não sei falar com o seu celular. Abra a engrenagem, preencha o tópico do celular em Dispositivos e toque em Salvar." };
+        }
+        return c;
       }
-      if (reDesligar.test(t)) return pedido("celular", "lanterna_desligar", "", "Lanterna apagada.");
-      return pedido("celular", "lanterna_ligar", "", "Lanterna ligada.");
     }
 
     // ----- PC
@@ -130,10 +168,13 @@ window.Dispositivos = (() => {
     if (cfg.topicoCelular) {
       lista.push({
         name: "controlar_celular",
-        description: "Executa uma ação no celular Android do usuário, como ligar ou apagar a lanterna. Use quando ele pedir.",
+        description: "Executa uma ação no celular Android do usuário: lanterna, volume de mídia, modo silencioso e som normal. Use quando ele pedir.",
         parameters: {
           type: "OBJECT",
-          properties: { acao: { type: "STRING", description: "Ação a executar.", enum: [...ACOES_CELULAR] } },
+          properties: {
+            acao: { type: "STRING", description: "Ação a executar.", enum: [...ACOES_CELULAR] },
+            valor: { type: "STRING", description: "Para volume_midia: nível de 0 a 15. Vazio nas outras ações." },
+          },
           required: ["acao"],
         },
       });
@@ -174,8 +215,14 @@ window.Dispositivos = (() => {
         return { erro: "Pergunte ao usuário se ele confirma e só depois chame de novo com confirmado=true.", silencioso: true };
       }
     }
+    let valorFinal = valor;
+    if (alvo === "celular" && acao === "volume_midia") {
+      const n = Number(valor);
+      if (!Number.isFinite(n)) return { erro: "Informe o nível do volume, de 0 a 15." };
+      valorFinal = String(Math.max(0, Math.min(15, Math.round(n))));
+    }
     try {
-      await enviar(alvo, acao, valor);
+      await enviar(alvo, acao, valorFinal);
       return { resultado: "ok" };
     } catch (e) {
       return { erro: e.message };
