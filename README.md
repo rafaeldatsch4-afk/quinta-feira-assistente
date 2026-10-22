@@ -56,6 +56,8 @@ Webhook (POST) ──► AI Agent ──► Respond to Webhook
   "usuario": "Chefe",
   "historico": [{ "papel": "usuario", "texto": "..." }],
   "dataHora": "2026-10-22T13:00:00.000Z",
+  "horaLocal": "quinta-feira, 22 de outubro de 2026 às 10:00",
+  "fusoHorario": "America/Sao_Paulo",
   "origem": "quinta-feira-ui"
 }
 ```

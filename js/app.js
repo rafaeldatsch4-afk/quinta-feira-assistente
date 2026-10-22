@@ -429,8 +429,7 @@
 
   /* ---------------- Início ---------------- */
 
-  const h = new Date().getHours();
-  const sauda = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+  const sauda = window.Cerebro.saudacao();
   adicionarMensagem(
     "ia",
     cfg.webhookUrl

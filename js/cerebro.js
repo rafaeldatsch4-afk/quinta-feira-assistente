@@ -19,6 +19,12 @@ window.Cerebro = (() => {
     }
   })();
 
+  // Madrugada (antes das 5h) conta como noite.
+  function saudacao(d = new Date()) {
+    const h = d.getHours();
+    return h >= 5 && h < 12 ? "Bom dia" : h >= 12 && h < 18 ? "Boa tarde" : "Boa noite";
+  }
+
   /* ---------------- n8n ---------------- */
 
   // Aceita os formatos mais comuns de resposta do n8n:
@@ -69,6 +75,9 @@ window.Cerebro = (() => {
           usuario: cfg.nomeUsuario,
           historico: historico.slice(-10),
           dataHora: new Date().toISOString(),
+          // Horário do usuário, para o agente saber se é dia ou noite.
+          horaLocal: new Date().toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" }),
+          fusoHorario: Intl.DateTimeFormat().resolvedOptions().timeZone,
           origem: "quinta-feira-ui",
         }),
       });
@@ -157,8 +166,7 @@ window.Cerebro = (() => {
     const nome = cfg.nomeUsuario || "Chefe";
 
     if (!t || /^(oi|ola|e ai|eai|bom dia|boa tarde|boa noite|hey)\b/.test(t)) {
-      const h = agora.getHours();
-      const sauda = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+      const sauda = saudacao(agora);
       return { texto: `${sauda}, ${nome}. Em que posso ajudar?` };
     }
     if (/\b(que horas|hora atual|horario)\b/.test(t)) {
@@ -253,6 +261,7 @@ window.Cerebro = (() => {
   return {
     perguntar,
     testarConexao,
+    saudacao,
     limparHistorico: () => { historico.length = 0; },
     get sessionId() { return sessionId; },
   };
