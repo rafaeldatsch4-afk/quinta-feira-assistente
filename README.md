@@ -45,6 +45,30 @@ Webhook (POST) ──► AI Agent ──► Respond to Webhook
                     └─ Memória (por sessionId)
 ```
 
+### Voz neural (recomendado)
+
+A voz do navegador costuma soar robótica, principalmente no Android. Para uma voz
+natural, o n8n gera o áudio e a interface toca. O workflow de exemplo já faz isso:
+
+```
+AI Agent ──► Gerar voz (OpenAI, voz "nova") ──► Áudio em base64 ──► Responder
+```
+
+Para adicionar num workflow que já existe, entre o **AI Agent** e o **Respond to Webhook**:
+
+1. Nó **OpenAI → Generate audio** (Text to speech): *Text Input* `{{ $json.output }}`,
+   *Voice* `Nova` ou `Shimmer` (femininas), *Model* `tts-1`.
+2. Nó **Extract from File → Move File to Base64 String**: *Input Binary Field* `data`,
+   *Destination Output Field* `audio`.
+3. No **Respond to Webhook** (Respond With: JSON):
+   ```
+   {{ { "output": $('AI Agent').item.json.output, "audio": $json.audio, "audioMime": "audio/mpeg" } }}
+   ```
+
+Também funciona com ElevenLabs ou outro serviço de voz (via *HTTP Request* devolvendo
+o arquivo): basta responder com `audio` em base64, ou com `audioUrl` apontando para um MP3.
+Se a resposta não trouxer áudio, a interface usa a voz do navegador como reserva.
+
 ### O que a interface envia
 
 `POST` com JSON:
@@ -58,7 +82,8 @@ Webhook (POST) ──► AI Agent ──► Respond to Webhook
   "dataHora": "2026-10-22T13:00:00.000Z",
   "horaLocal": "quinta-feira, 22 de outubro de 2026 às 10:00",
   "fusoHorario": "America/Sao_Paulo",
-  "origem": "quinta-feira-ui"
+  "origem": "quinta-feira-ui",
+  "querAudio": true
 }
 ```
 
@@ -69,6 +94,7 @@ No n8n, acesse como `{{ $json.body.chatInput }}`, `{{ $json.body.sessionId }}` e
 Qualquer um destes formatos funciona:
 
 ```json
+{ "output": "Agora são 10h.", "audio": "<mp3 em base64>", "audioMime": "audio/mpeg" }
 { "output": "Agora são 10h." }
 { "resposta": "Agora são 10h." }
 [ { "output": "Agora são 10h." } ]

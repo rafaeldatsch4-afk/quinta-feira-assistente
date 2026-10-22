@@ -94,9 +94,9 @@
     sintese.addEventListener?.("voiceschanged", carregarVozes);
   }
 
-  function escolherVoz() {
-    if (cfg.voz) {
-      const v = vozes.find((x) => x.name === cfg.voz);
+  function escolherVoz(nome = cfg.voz) {
+    if (nome) {
+      const v = vozes.find((x) => x.name === nome);
       if (v) return v;
     }
     const pt = vozes.filter((v) => /^pt[-_]br/i.test(v.lang));
@@ -109,17 +109,18 @@
     );
   }
 
-  function falar(texto) {
+  // Voz do navegador. "opcoes" permite ouvir uma amostra antes de salvar.
+  function falarNavegador(texto, opcoes = cfg) {
     return new Promise((resolve) => {
-      if (!sintese || !cfg.falarRespostas || !texto) return resolve();
+      if (!sintese || !texto) return resolve();
       sintese.cancel();
       // Remove marcações e links para a leitura ficar natural.
       const limpo = texto.replace(/https?:\/\/\S+/g, "link").replace(/[*_#`>]/g, "");
       const u = new SpeechSynthesisUtterance(limpo);
       u.lang = cfg.idioma;
-      u.rate = Number(cfg.velocidade) || 1;
-      u.pitch = Number(cfg.tom) || 1;
-      const v = escolherVoz();
+      u.rate = Number(opcoes.velocidade) || 1;
+      u.pitch = Number(opcoes.tom) || 1;
+      const v = escolherVoz(opcoes.voz);
       if (v) u.voice = v;
       u.onstart = () => definirEstado("falando");
       u.onend = u.onerror = () => { if (estado === "falando") definirEstado("ocioso"); resolve(); };
@@ -127,8 +128,68 @@
     });
   }
 
+  /* Voz neural vinda do n8n (campo "audio" em base64 ou "audioUrl"). */
+  const player = new Audio();
+  player.setAttribute("playsinline", "");
+  let grafoAudio = null;   // liga o player ao núcleo animado
+  let urlAudio = null;
+
+  function base64ParaBlob(b64, mime) {
+    const m = b64.match(/^data:([^;]+);base64,(.*)$/);
+    if (m) { mime = m[1]; b64 = m[2]; }
+    const bin = atob(b64.replace(/\s/g, ""));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+
+  async function prepararGrafo() {
+    if (grafoAudio !== null) return;
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      await ac.resume();
+      // Só passa o som pelo analisador se o contexto estiver ativo; senão o áudio sairia mudo.
+      grafoAudio = ac.state === "running" ? window.Nucleo.conectarElemento(player, ac) || false : false;
+      if (!grafoAudio) ac.close();
+    } catch (_) { grafoAudio = false; }
+  }
+
+  async function tocarAudio(r) {
+    const p = r.audio ? player : new Audio(r.audioUrl);
+    if (r.audio) {
+      if (urlAudio) URL.revokeObjectURL(urlAudio);
+      urlAudio = URL.createObjectURL(base64ParaBlob(r.audio, r.audioMime));
+      player.src = urlAudio;
+      await prepararGrafo();
+    }
+    p.playbackRate = Number(cfg.velocidade) || 1;
+    return new Promise((resolve, reject) => {
+      const fim = () => {
+        if (grafoAudio && p === player) grafoAudio.desligar();
+        if (estado === "falando") definirEstado("ocioso");
+        resolve();
+      };
+      p.onended = fim;
+      p.onpause = fim;
+      p.onerror = () => reject(new Error("áudio inválido"));
+      if (grafoAudio && p === player) grafoAudio.ligar();
+      definirEstado("falando");
+      p.play().catch(reject);
+    });
+  }
+
+  async function falar(texto, resposta = {}) {
+    if (!cfg.falarRespostas) return;
+    if (resposta.audio || resposta.audioUrl) {
+      try { return await tocarAudio(resposta); }
+      catch (_) { /* cai para a voz do navegador */ }
+    }
+    return falarNavegador(texto);
+  }
+
   function pararFala() {
     if (sintese) sintese.cancel();
+    if (!player.paused) player.pause();
     if (estado === "falando") definirEstado("ocioso");
   }
 
@@ -166,7 +227,7 @@
       executarAcao(r.acao);
       definirEstado("ocioso");
       ocupado = false;
-      falar(r.texto);
+      falar(r.texto, r);
     } catch (e) {
       digitando.remove();
       adicionarMensagem("ia", `⚠ ${e.message}`, "erro");
@@ -380,6 +441,16 @@
     document.querySelectorAll("[data-auth]").forEach((c) => (c.hidden = c.dataset.auth !== f.authTipo.value));
   }
   f.authTipo.addEventListener("change", mostrarCamposAuth);
+
+  $("#ouvir-amostra").addEventListener("click", () => {
+    const nome = cfg.nomeUsuario || "Chefe";
+    falarNavegador(`Olá, ${nome}. Eu sou a Quinta-Feira. Esta é a minha voz.`, {
+      voz: f.voz.value,
+      velocidade: f.velocidade.value,
+      tom: f.tom.value,
+    });
+  });
+  el.modal.addEventListener("close", () => { if (sintese) sintese.cancel(); });
 
   $("#botao-config").addEventListener("click", () => {
     f.nomeUsuario.value = cfg.nomeUsuario;

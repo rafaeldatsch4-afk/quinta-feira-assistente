@@ -40,6 +40,10 @@ window.Cerebro = (() => {
     return {
       texto: typeof texto === "string" ? texto : JSON.stringify(texto),
       acao: dados.acao || dados.action || null,
+      // Voz neural gerada no n8n: base64 (ou data: URL) ou um link para o arquivo.
+      audio: dados.audio || dados.audioBase64 || null,
+      audioMime: dados.audioMime || "audio/mpeg",
+      audioUrl: dados.audioUrl || null,
     };
   }
 
@@ -79,6 +83,7 @@ window.Cerebro = (() => {
           horaLocal: new Date().toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" }),
           fusoHorario: Intl.DateTimeFormat().resolvedOptions().timeZone,
           origem: "quinta-feira-ui",
+          querAudio: !!cfg.falarRespostas, // o n8n pode pular a voz neural se for false
         }),
       });
       if (res.status === 401 || res.status === 403) {
@@ -96,7 +101,7 @@ window.Cerebro = (() => {
       let dados = bruto;
       try { dados = JSON.parse(bruto); } catch (_) {}
       const resposta = extrairResposta(dados);
-      if (!resposta.texto && !resposta.acao) {
+      if (!resposta.texto && !resposta.acao && !resposta.audio && !resposta.audioUrl) {
         resposta.texto = "Recebi uma resposta vazia do n8n. Confira o nó Respond to Webhook.";
       }
       return resposta;

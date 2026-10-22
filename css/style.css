@@ -338,6 +338,12 @@ body[data-estado="ouvindo"] .botao-mic {
   font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--texto-2);
 }
 .campo-config output { font-family: var(--fonte-mono); color: var(--texto); letter-spacing: 0; }
+.rotulo-config {
+  font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--texto-2);
+}
+.linha-voz { display: flex; gap: 8px; }
+.linha-voz select { flex: 1; min-width: 0; }
+.linha-voz .botao-sec { flex: none; padding: 8px 12px; }
 .campo-config small { font-size: 13px; color: var(--texto-3); line-height: 1.35; }
 .campo-config input[type="text"],
 .campo-config input[type="url"],

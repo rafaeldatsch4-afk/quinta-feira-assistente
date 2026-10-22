@@ -167,6 +167,22 @@ window.Nucleo = (() => {
 
   return {
     definirEstado(novo) { if (CORES[novo]) estado = novo; },
+    // Liga o núcleo a um elemento <audio> (voz neural). Recebe um AudioContext já
+    // ativo; depois disso o som do elemento passa pelo analisador até a saída.
+    conectarElemento(elemento, ac) {
+      try {
+        const fonte = ac.createMediaElementSource(elemento);
+        const an = ac.createAnalyser();
+        an.fftSize = 256;
+        fonte.connect(an);
+        an.connect(ac.destination);
+        const dados = new Uint8Array(an.frequencyBinCount);
+        return {
+          ligar() { ac.resume(); analisador = an; dadosAudio = dados; },
+          desligar() { if (analisador === an) { analisador = null; dadosAudio = null; } },
+        };
+      } catch (_) { return null; }
+    },
     conectarAudio(stream) {
       try {
         const ac = new (window.AudioContext || window.webkitAudioContext)();

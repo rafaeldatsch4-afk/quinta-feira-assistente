@@ -14,7 +14,10 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "quinta-feira"
     },
     {
@@ -29,7 +32,10 @@
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [260, 0]
+      "position": [
+        260,
+        0
+      ]
     },
     {
       "parameters": {
@@ -44,7 +50,10 @@
       "name": "Modelo de Chat",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [180, 220]
+      "position": [
+        180,
+        220
+      ]
     },
     {
       "parameters": {
@@ -56,33 +65,129 @@
       "name": "Memória",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [360, 220]
+      "position": [
+        360,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "generate",
+        "model": "tts-1",
+        "input": "={{ $json.output }}",
+        "voice": "nova",
+        "options": {
+          "response_format": "mp3"
+        }
+      },
+      "id": "a1f0c6c2-0006-4c1e-9a10-000000000006",
+      "name": "Gerar voz",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "data",
+        "destinationKey": "audio",
+        "options": {}
+      },
+      "id": "a1f0c6c2-0007-4c1e-9a10-000000000007",
+      "name": "Áudio em base64",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"output\": $json.output } }}",
+        "responseBody": "={{ { \"output\": $('AI Agent').item.json.output, \"audio\": $json.audio, \"audioMime\": \"audio/mpeg\" } }}",
         "options": {}
       },
       "id": "a1f0c6c2-0005-4c1e-9a10-000000000005",
       "name": "Responder",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [620, 0]
+      "position": [
+        1040,
+        0
+      ]
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "AI Agent": {
-      "main": [[{ "node": "Responder", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Gerar voz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Modelo de Chat": {
-      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Memória": {
-      "ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]]
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar voz": {
+      "main": [
+        [
+          {
+            "node": "Áudio em base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Áudio em base64": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {

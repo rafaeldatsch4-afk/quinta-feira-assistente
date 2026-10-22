@@ -181,10 +181,14 @@
         <span class="resultado-teste" id="resultado-teste"></span>
       </div>
 
-      <label class="campo-config">
-        <span>Voz</span>
-        <select name="voz" id="select-voz"></select>
-      </label>
+      <div class="campo-config">
+        <label for="select-voz"><span class="rotulo-config">Voz do navegador</span></label>
+        <div class="linha-voz">
+          <select name="voz" id="select-voz"></select>
+          <button type="button" class="botao-sec" id="ouvir-amostra">Ouvir amostra</button>
+        </div>
+        <small>Se o n8n mandar áudio (voz neural), ele tem prioridade e esta voz fica só de reserva. Veja o README para ativar.</small>
+      </div>
 
       <div class="linha-config">
         <label class="campo-config">
