@@ -520,3 +520,5 @@ body[data-estado="ouvindo"] .botao-mic {
 
   .linha-config { grid-template-columns: 1fr; }
 }
+
+.msg-texto strong { color: var(--ciano); font-weight: 600; }

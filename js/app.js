@@ -44,11 +44,18 @@
         a.href = p; a.textContent = p; a.target = "_blank"; a.rel = "noopener";
         frag.append(a);
       } else if (p) {
-        frag.append(p);
+        // **negrito** da IA vira negrito de verdade; o resto vai como texto puro.
+        p.split(/\*\*([^*\n]+)\*\*/g).forEach((t, j) => {
+          if (j % 2) { const b = document.createElement("strong"); b.textContent = t; frag.append(b); }
+          else if (t) frag.append(t);
+        });
       }
     });
     return frag;
   }
+
+  // Texto sem marcações, para a legenda curta.
+  const semMarcacao = (t) => t.replace(/\*\*([^*\n]+)\*\*/g, "$1");
 
   function adicionarMensagem(autor, texto, extra = "") {
     const msg = document.createElement("div");
@@ -264,7 +271,8 @@
       let msgResposta = null;
       if (r.texto) {
         msgResposta = adicionarMensagem("ia", r.texto);
-        el.legenda.textContent = r.texto.length > 220 ? r.texto.slice(0, 217) + "…" : r.texto;
+        const curto = semMarcacao(r.texto);
+        el.legenda.textContent = curto.length > 220 ? curto.slice(0, 217) + "…" : curto;
       }
       executarAcao(r.acao);
       definirEstado("ocioso");
