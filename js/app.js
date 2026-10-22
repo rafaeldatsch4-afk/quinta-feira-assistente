@@ -63,6 +63,9 @@
     return msg;
   }
 
+  // Quando a área do chat encolhe (ex.: a legenda cresce no celular), mantém o fim visível.
+  new ResizeObserver(() => { el.chat.scrollTop = el.chat.scrollHeight; }).observe(el.chat);
+
   function indicadorDigitando() {
     const pontos = document.createElement("span");
     pontos.className = "digitando";
@@ -190,6 +193,27 @@
     window.Cerebro.limparHistorico();
   });
 
+  /* ---------------- Menu lateral (celular) ---------------- */
+
+  const botaoMenu = $("#botao-menu");
+  const fundoMenu = $("#gaveta-fundo");
+  function abrirMenu(abrir) {
+    document.body.classList.toggle("menu-aberto", abrir);
+    fundoMenu.hidden = !abrir;
+    botaoMenu.setAttribute("aria-expanded", String(abrir));
+  }
+  botaoMenu.addEventListener("click", () => abrirMenu(true));
+  $("#fechar-menu").addEventListener("click", () => abrirMenu(false));
+  fundoMenu.addEventListener("click", () => abrirMenu(false));
+  // Fecha a gaveta ao usar um comando rápido ou uma ação.
+  $("#painel-esq").addEventListener("click", (e) => {
+    if (e.target.closest(".atalho, .item-menu")) abrirMenu(false);
+  });
+  $("#menu-config").addEventListener("click", () => $("#botao-config").click());
+  $("#menu-limpar").addEventListener("click", () => $("#limpar-chat").click());
+  $("#menu-silenciar").addEventListener("click", pararFala);
+  matchMedia("(min-width: 761px)").addEventListener("change", (e) => e.matches && abrirMenu(false));
+
   /* ---------------- Escuta (reconhecimento de voz) ---------------- */
 
   const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -268,6 +292,7 @@
       e.preventDefault();
       ouvindo ? pararDeOuvir() : ouvir();
     } else if (e.key === "Escape") {
+      abrirMenu(false);
       pararFala();
       pararDeOuvir();
     }
@@ -326,6 +351,12 @@
     n8n.classList.toggle("off", !cfg.webhookUrl);
     n8n.querySelector("span").textContent = cfg.webhookUrl ? "N8N CONECTADO" : "MODO OFFLINE";
     n8n.title = cfg.webhookUrl || "Configure o webhook do n8n";
+
+    const menuStatus = $("#menu-status-n8n");
+    menuStatus.classList.toggle("off", !cfg.webhookUrl);
+    menuStatus.innerHTML = cfg.webhookUrl
+      ? "Cérebro: <b>n8n conectado</b>"
+      : "Cérebro: <b>modo offline</b>";
   }
   addEventListener("online", atualizarStatus);
   addEventListener("offline", atualizarStatus);
