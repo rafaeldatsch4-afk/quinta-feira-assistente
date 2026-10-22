@@ -172,7 +172,8 @@
 
       <label class="campo-config" data-auth="bearer">
         <span>Token</span>
-        <input type="password" name="token" placeholder="Enviado como Authorization: Bearer …">
+        <input type="password" name="token" placeholder="Só o token, sem a palavra Bearer">
+        <small>No n8n, a credencial Header Auth deve ter Name <code>Authorization</code> e Value <code>Bearer SEU_TOKEN</code>.</small>
       </label>
 
       <div class="linha-teste">

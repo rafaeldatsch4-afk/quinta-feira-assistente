@@ -43,7 +43,9 @@ window.Cerebro = (() => {
     if (a.authTipo === "basic" && (a.authUsuario || a.authSenha)) {
       return `Basic ${base64(`${a.authUsuario}:${a.authSenha}`)}`;
     }
-    if (a.authTipo === "bearer" && a.token) return `Bearer ${a.token}`;
+    // Aceita o token com ou sem "Bearer " na frente (evita "Bearer Bearer ...").
+    const token = (a.token || "").trim().replace(/^bearer\s+/i, "");
+    if (a.authTipo === "bearer" && token) return `Bearer ${token}`;
     return null;
   }
 
@@ -71,7 +73,11 @@ window.Cerebro = (() => {
         }),
       });
       if (res.status === 401 || res.status === 403) {
-        throw new Error("O n8n recusou a autenticação. Confira usuário e senha (ou token) em Configurações.");
+        throw new Error(
+          "O n8n recusou a autenticação (403). Confira se o tipo escolhido aqui é o mesmo do nó Webhook " +
+          "(Basic Auth ou Header Auth), se usuário/senha ou token estão iguais aos da credencial, " +
+          "e se o workflow foi salvo e está ativo."
+        );
       }
       if (res.status === 404) {
         throw new Error("Webhook não encontrado (404). Verifique se o workflow está ativo e se a URL é a de produção.");
