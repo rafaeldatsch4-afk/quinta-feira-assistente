@@ -113,7 +113,16 @@ window.Cerebro = (() => {
       if (res.status === 404) {
         throw new Error("Webhook não encontrado (404). Verifique se o workflow está ativo e se a URL é a de produção.");
       }
-      if (!res.ok) throw new Error(`n8n respondeu ${res.status} ${res.statusText}`);
+      if (!res.ok) {
+        // O n8n costuma explicar o erro no corpo ({"message": "..."}); mostra para facilitar o diagnóstico.
+        let detalhe = "";
+        try {
+          const corpo = await res.text();
+          try { const j = JSON.parse(corpo); detalhe = j.message || j.error || j.description || ""; } catch (_) { detalhe = corpo; }
+        } catch (_) { /* sem corpo */ }
+        detalhe = String(detalhe).replace(/\s+/g, " ").trim().slice(0, 160);
+        throw new Error(`O n8n respondeu ${res.status}${detalhe ? `: ${detalhe}` : ""}. Abra Executions no n8n para ver qual nó falhou.`);
+      }
       const bruto = await res.text();
       let dados = bruto;
       try { dados = JSON.parse(bruto); } catch (_) {}
