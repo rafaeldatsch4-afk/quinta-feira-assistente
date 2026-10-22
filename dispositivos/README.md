@@ -121,10 +121,10 @@ por causa de um pedido antigo.
 | `nao_perturbe_ligar` | Audio → **Do Not Disturb** | Mode: Priority |
 | `nao_perturbe_desligar` | Audio → **Do Not Disturb** | Mode: Allow All |
 | `abrir_app` | App → **Launch App** | Package/App Name: `%pedido2` |
-| `abrir_site` | Net → **Browse URL** | URL: `%pedido2` |
-| `midia_tocar_pausar` | Media → **Media Control** | Cmd: Toggle Pause |
-| `midia_proxima` | Media → **Media Control** | Cmd: Next |
-| `midia_anterior` | Media → **Media Control** | Cmd: Previous |
+| `abrir_site` | **Navegar URL** (*Browse URL*) | URL: `%pedido2` (o Android pode pedir "Exibir sobre outros apps") |
+| `midia_tocar_pausar` | **Controle de Mídia** (*Media Control*) | Cmd: alternar pausa (*Toggle Pause*) |
+| `midia_proxima` | **Controle de Mídia** | Cmd: próxima (*Next*) |
+| `midia_anterior` | **Controle de Mídia** | Cmd: anterior (*Previous*) |
 | `alarme` | Variable Split `%pedido2` com `:` e depois App → **Set Alarm** | Hours: `%pedido21`, Minutes: `%pedido22` |
 
 **Testado no celular:** lanterna, volume de mídia, silencioso e som normal. Atenção: toda ação precisa

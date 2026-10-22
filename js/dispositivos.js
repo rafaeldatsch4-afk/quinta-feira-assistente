@@ -4,9 +4,36 @@ window.Dispositivos = (() => {
   const cfg = window.QF_CONFIG;
 
   // Ações que o Tasker do celular já sabe executar. Acrescente aqui ao criar novas no Tasker.
-  const ACOES_CELULAR = new Set(["lanterna_ligar", "lanterna_desligar", "volume_midia", "silencioso", "som_normal"]);
+  const ACOES_CELULAR = new Set([
+    "lanterna_ligar", "lanterna_desligar", "volume_midia", "silencioso", "som_normal",
+    "abrir_site", "midia_tocar_pausar", "midia_proxima", "midia_anterior",
+  ]);
 
-  // Ações que o Quinta-PC aceita (quinta_pc.py). Desligar/reiniciar exigem confirmação.
+  // Sites que ela abre pelo nome ("abre o youtube no celular").
+  const SITES = {
+    youtube: "https://www.youtube.com", google: "https://www.google.com", gmail: "https://mail.google.com",
+    github: "https://github.com", whatsapp: "https://web.whatsapp.com", spotify: "https://open.spotify.com",
+    instagram: "https://www.instagram.com", facebook: "https://www.facebook.com", netflix: "https://www.netflix.com",
+    maps: "https://maps.google.com",
+  };
+
+  // Só endereços http/https chegam ao celular. Acrescenta https:// se faltar.
+  function urlSegura(texto) {
+    let u = String(texto || "").trim().replace(/[.,!?]+$/, "");
+    if (!u) return null;
+    if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(u)) {
+      // "javascript:alert(1)", "mailto:x" etc. têm esquema sem "//"; "site.com:8080" é domínio com porta.
+      if (/^[a-z][a-z0-9+.-]*:(?!\d)/i.test(u)) return null;
+      u = "https://" + u;
+    }
+    try {
+      const url = new URL(u);
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   const ACOES_PC = new Set([
     "abrir_site", "pesquisar", "youtube", "abrir_app", "comando", "volume_mais", "volume_menos", "mudo",
     "midia_tocar_pausar", "midia_proxima", "midia_anterior", "bloquear", "desligar", "reiniciar", "cancelar_desligamento",
@@ -66,6 +93,27 @@ window.Dispositivos = (() => {
       const nivel = nivelVolume(t, original);
       if (nivel === null) return { resposta: "Qual volume você quer? Diga um número de 0 a 15 ou uma porcentagem." };
       return pedido("celular", "volume_midia", String(nivel), `Volume do celular em ${nivel}.`);
+    }
+
+    // abrir site: "abre o site youtube.com", "abre o youtube no celular", "pesquisa X no celular"
+    const orig = String(original).toLowerCase();
+    const site = orig.match(/\b(?:abre|abra|abrir)\b.*?\bsite\s+(\S+\.\S+)/);
+    if (site) {
+      const url = urlSegura(site[1]);
+      if (url) return pedido("celular", "abrir_site", url, "Abrindo o site no celular.");
+    }
+    const nomeSite = t.match(/\b(?:abre|abra|abrir)\s+(?:o |a )?(youtube|google|gmail|github|whatsapp|spotify|instagram|facebook|netflix|maps)\b/);
+    if (nomeSite && falaDoCelular) return pedido("celular", "abrir_site", SITES[nomeSite[1]], `Abrindo o ${nomeSite[1]} no celular.`);
+    const busca = orig.match(/pesquis(?:a|e|ar)\s+(.+?)\s+n[oa]\s+(?:meu\s+)?(?:celular|telefone)\b/);
+    if (busca) {
+      return pedido("celular", "abrir_site", "https://www.google.com/search?q=" + encodeURIComponent(busca[1]), "Pesquisando no celular.");
+    }
+
+    // música
+    if (/\b(proxima|pula|pular|avanca)\b.*\b(musica|faixa)\b/.test(t)) return pedido("celular", "midia_proxima", "", "Próxima música.");
+    if (/\b(anterior|volta|voltar)\b/.test(t) && /\b(musica|faixa)\b/.test(t)) return pedido("celular", "midia_anterior", "", "Música anterior.");
+    if (/\b(pausa|pause|pausar|parar|retoma|continua|toca|tocar|play)\b.*\b(musica|video)\b/.test(t)) {
+      return pedido("celular", "midia_tocar_pausar", "", "Pronto, play ou pause na música.");
     }
     return null;
   }
@@ -168,12 +216,12 @@ window.Dispositivos = (() => {
     if (cfg.topicoCelular) {
       lista.push({
         name: "controlar_celular",
-        description: "Executa uma ação no celular Android do usuário: lanterna, volume de mídia, modo silencioso e som normal. Use quando ele pedir.",
+        description: "Executa uma ação no celular Android do usuário: lanterna, volume de mídia, modo silencioso, som normal, abrir site e controle de música. Use quando ele pedir.",
         parameters: {
           type: "OBJECT",
           properties: {
             acao: { type: "STRING", description: "Ação a executar.", enum: [...ACOES_CELULAR] },
-            valor: { type: "STRING", description: "Para volume_midia: nível de 0 a 15. Vazio nas outras ações." },
+            valor: { type: "STRING", description: "Para volume_midia: nível de 0 a 15. Para abrir_site: endereço do site. Vazio nas outras ações." },
           },
           required: ["acao"],
         },
@@ -216,6 +264,10 @@ window.Dispositivos = (() => {
       }
     }
     let valorFinal = valor;
+    if (alvo === "celular" && acao === "abrir_site") {
+      valorFinal = urlSegura(valor);
+      if (!valorFinal) return { erro: "Informe um endereço de site válido (http ou https)." };
+    }
     if (alvo === "celular" && acao === "volume_midia") {
       const n = Number(valor);
       if (!Number.isFinite(n)) return { erro: "Informe o nível do volume, de 0 a 15." };
