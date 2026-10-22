@@ -25,7 +25,7 @@
         "promptType": "define",
         "text": "={{ $json.body.chatInput }}",
         "options": {
-          "systemMessage": "=Você é a Quinta-Feira, uma assistente pessoal inteligente no estilo do J.A.R.V.I.S. Fale sempre em português do Brasil, com tom confiante, prestativo e levemente bem-humorado. Chame o usuário de {{ $json.body.usuario || 'Chefe' }}. Suas respostas são lidas em voz alta, então seja direta: no máximo 3 frases curtas, sem markdown, listas ou emojis, a não ser que o usuário peça detalhes. Data e hora atuais do usuário: {{ $json.body.horaLocal || $now.setZone('America/Sao_Paulo').toFormat(\"cccc, dd 'de' LLLL 'de' yyyy, HH:mm\") }}. Use isso para saudações e perguntas sobre horário."
+          "systemMessage": "=Você é a Quinta-Feira, uma assistente pessoal inteligente no estilo do J.A.R.V.I.S. Fale sempre em português do Brasil, com tom confiante, prestativo e levemente bem-humorado. Chame o usuário de {{ $json.body.usuario || 'Chefe' }}. Suas respostas são lidas em voz alta, então seja direta: no máximo 3 frases curtas, sem markdown, listas ou emojis, a não ser que o usuário peça detalhes. Data e hora atuais do usuário: {{ $json.body.horaLocal || $now.setZone('America/Sao_Paulo').toFormat(\"cccc, dd 'de' LLLL 'de' yyyy, HH:mm\") }}. Use isso para saudações e perguntas sobre horário. Você pode controlar o celular e o PC do usuário com as ferramentas acao_celular e acao_pc. Use só as ações listadas nelas. Para desligar ou reiniciar o PC, peça confirmação antes. Depois de usar uma ferramenta, confirme em uma frase curta o que fez."
         }
       },
       "id": "a1f0c6c2-0002-4c1e-9a10-000000000002",
@@ -102,6 +102,64 @@
         820,
         0
       ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Executa uma ação no computador (PC) do usuário. Ações: abrir_site (valor: endereço), pesquisar (valor: termo), youtube (valor: termo), abrir_app (valor: spotify, chrome, bloco de notas, calculadora, explorador, vscode, discord, steam), comando (valor: modo jogo, limpar lixeira), volume_mais (valor: passos), volume_menos (valor: passos), mudo, midia_tocar_pausar, midia_proxima, midia_anterior, bloquear, desligar (valor: minutos), reiniciar (valor: minutos), cancelar_desligamento.",
+        "method": "POST",
+        "url": "https://ntfy.sh/quinta-TROQUE-POR-UM-CODIGO-SECRETO-pc",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Priority",
+              "value": "1"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/plain",
+        "body": "={{ $fromAI('acao', 'nome da ação, exatamente como na lista', 'string') }}|{{ $fromAI('valor', 'valor da ação, ou vazio', 'string', '') }}",
+        "options": {}
+      },
+      "id": "a1f0c6c2-0008-4c1e-9a10-000000000008",
+      "name": "acao_pc",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Executa uma ação no celular Android do usuário. Ações: lanterna_ligar, lanterna_desligar, volume_midia (valor: 0 a 15), silencioso, som_normal, nao_perturbe_ligar, nao_perturbe_desligar, abrir_app (valor: nome do app), abrir_site (valor: endereço), midia_tocar_pausar, midia_proxima, midia_anterior, alarme (valor: HH:MM).",
+        "method": "POST",
+        "url": "https://ntfy.sh/quinta-TROQUE-POR-UM-CODIGO-SECRETO-celular",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Priority",
+              "value": "1"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/plain",
+        "body": "={{ $fromAI('acao', 'nome da ação, exatamente como na lista', 'string') }}|{{ $fromAI('valor', 'valor da ação, ou vazio', 'string', '') }}",
+        "options": {}
+      },
+      "id": "a1f0c6c2-0009-4c1e-9a10-000000000009",
+      "name": "acao_celular",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        220
+      ]
     }
   ],
   "connections": {
@@ -155,6 +213,28 @@
           {
             "node": "Responder",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "acao_pc": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "acao_celular": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]

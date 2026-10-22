@@ -151,6 +151,7 @@ ou texto puro.
 
   As credenciais ficam salvas só no navegador (localStorage), nunca no código.
 - **Ferramentas:** conecte tools ao AI Agent (Google Calendar, Gmail, HTTP Request, clima…) para a Quinta-Feira executar tarefas de verdade.
+- **Ações no celular e no PC:** veja [`dispositivos/README.md`](dispositivos/README.md) (Tasker + ntfy no Android, script Quinta-PC no computador).
 - As configurações ficam salvas no navegador (localStorage). Para deixar uma URL padrão para todos, edite `js/config.js`.
 
 ## Estrutura
@@ -164,4 +165,5 @@ js/cerebro.js                  integração com o n8n + modo offline
 js/live.js                     modo Live (Gemini Live API em tempo real)
 js/app.js                      voz, chat, painéis e configurações
 n8n/quinta-feira-workflow.json workflow de exemplo para importar
+dispositivos/                  ações no celular (Tasker) e no PC (quinta_pc.py)
 ```

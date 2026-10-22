@@ -1,0 +1,20 @@
+{
+  "topico": "quinta-TROQUE-POR-UM-CODIGO-SECRETO-pc",
+  "servidor": "https://ntfy.sh",
+
+  "apps": {
+    "spotify": "%APPDATA%\\Spotify\\Spotify.exe",
+    "chrome": "start chrome",
+    "bloco de notas": "notepad",
+    "calculadora": "calc",
+    "explorador": "explorer",
+    "vscode": "code",
+    "discord": "%LOCALAPPDATA%\\Discord\\Update.exe --processStart Discord.exe",
+    "steam": "start steam://open/main"
+  },
+
+  "comandos": {
+    "modo jogo": "start steam://open/bigpicture",
+    "limpar lixeira": "powershell -NoProfile -Command Clear-RecycleBin -Force"
+  }
+}
