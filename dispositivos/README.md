@@ -104,6 +104,14 @@ por causa de um pedido antigo.
 | `midia_anterior` | Media → **Media Control** | Cmd: Previous |
 | `alarme` | Variable Split `%pedido2` com `:` e depois App → **Set Alarm** | Hours: `%pedido21`, Minutes: `%pedido22` |
 
+**Dicas (testadas no Tasker em português):**
+- O campo **Ação** do evento é o primeiro da tela; não toque no ícone de etiqueta ao lado (abre a lista de variáveis).
+- Depois de criar o perfil, toque no **✓** do topo da tela de Perfis para aplicá-lo. Sem isso o perfil não dispara.
+- Para ver se o Tasker recebe as mensagens, deixe uma ação **Alerta → Flash** com o texto `%message` como primeira ação da tarefa.
+- Na lista de ações, use a **lupa** para achar a ação pelo nome (ex.: "lanterna").
+- Na condição *Se*, o operador `~` (corresponde) funciona igual a *igual*.
+- Ao testar pelo app ntfy, o teclado põe maiúscula na primeira letra (`Lanterna_ligar` ≠ `lanterna_ligar`). Toque em ⬆ antes de digitar.
+
 Os nomes das ações do Tasker podem variar um pouco conforme a versão. Para Wi-Fi e
 Bluetooth, o Android 10+ exige o app auxiliar **Tasker Settings**.
 
