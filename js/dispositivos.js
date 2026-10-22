@@ -6,7 +6,7 @@ window.Dispositivos = (() => {
   // Ações que o Tasker do celular já sabe executar. Acrescente aqui ao criar novas no Tasker.
   const ACOES_CELULAR = new Set([
     "lanterna_ligar", "lanterna_desligar", "volume_midia", "silencioso", "som_normal",
-    "abrir_site", "midia_tocar_pausar", "midia_proxima", "midia_anterior", "abrir_app", "alarme",
+    "abrir_site", "midia_tocar_pausar", "midia_proxima", "midia_anterior", "abrir_app", "alarme", "timer",
   ]);
 
   // Sites que ela abre pelo nome ("abre o youtube no celular").
@@ -86,6 +86,107 @@ window.Dispositivos = (() => {
     return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
   }
 
+  const PALAVRAS_NUMERO = {
+    um: 1, uma: 1, dois: 2, duas: 2, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9,
+    dez: 10, quinze: 15, vinte: 20, trinta: 30, quarenta: 40, cinquenta: 50,
+  };
+
+  // Duração dita em português ("5 minutos", "1 hora e 30 minutos", "meia hora") em segundos, ou null.
+  function segundosDoTimer(t) {
+    const s = t
+      .replace(/\bmeia hora\b/g, "30 minutos")
+      .replace(/\bmeio minuto\b/g, "30 segundos")
+      .replace(/\bquarenta e cinco\b/g, "45")
+      .replace(/\b(um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|quinze|vinte|trinta|quarenta|cinquenta)\b/g, (p) => String(PALAVRAS_NUMERO[p]));
+    const unidade = { h: 3600, hora: 3600, horas: 3600, min: 60, minuto: 60, minutos: 60, s: 1, seg: 1, segundo: 1, segundos: 1 };
+    let total = 0;
+    for (const m of s.matchAll(/(\d+)\s*(horas?|h|minutos?|min|segundos?|seg|s)\b/g)) total += Number(m[1]) * unidade[m[2]];
+    return total > 0 && total <= 86400 ? total : null;
+  }
+
+  function descreverDuracao(seg) {
+    const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
+    const partes = [];
+    if (h) partes.push(`${h} ${h === 1 ? "hora" : "horas"}`);
+    if (m) partes.push(`${m} ${m === 1 ? "minuto" : "minutos"}`);
+    if (s) partes.push(`${s} ${s === 1 ? "segundo" : "segundos"}`);
+    return partes.join(" e ");
+  }
+
+  // ----- WhatsApp: contatos cadastrados nas Configurações (uma linha por contato: nome=número)
+  function contatos() {
+    return String(cfg.contatos || "").split(/\r?\n/).map((linha) => {
+      const i = linha.indexOf("=");
+      return i > 0 ? { nome: linha.slice(0, i).trim(), numero: linha.slice(i + 1).trim() } : null;
+    }).filter((c) => c && c.nome && c.numero);
+  }
+
+  function acharContato(nome) {
+    const n = norm(nome || "");
+    if (!n) return null;
+    const lista = contatos();
+    return lista.find((c) => norm(c.nome) === n)
+      || lista.find((c) => norm(c.nome).split(" ").includes(n))
+      || lista.find((c) => norm(c.nome).includes(n))
+      || null;
+  }
+
+  function numeroWhatsapp(numero) {
+    let d = String(numero).replace(/\D/g, "");
+    if (d.length === 10 || d.length === 11) d = "55" + d; // DDD + número (Brasil)
+    return d.length >= 12 && d.length <= 15 ? d : null;
+  }
+
+  function urlWhatsapp(contato, mensagem) {
+    const num = numeroWhatsapp(contato.numero);
+    if (!num) return null;
+    return `https://wa.me/${num}${mensagem ? `?text=${encodeURIComponent(mensagem)}` : ""}`;
+  }
+
+  // "abre a conversa com o João", "manda mensagem para a Maria dizendo que cheguei"
+  function comandoWhatsapp(original) {
+    const o = String(original).toLowerCase().replace(/[.!?]+$/, "").trim();
+    const citouZap = /\b(whatsapp|whats|zap)\b/.test(norm(o));
+    let nome = null;
+    let texto = "";
+    let m = o.match(/(?:abre|abra|abrir)\s+(?:a\s+)?conversa\s+(?:com|do|da)\s+(?:o\s+|a\s+)?(.+?)(?:\s+no\s+(?:whatsapp|whats|zap))?$/)
+      || o.match(/(?:abre|abra|abrir)\s+(?:o\s+)?(?:whatsapp|whats|zap)\s+(?:do|da|de)\s+(?:o\s+|a\s+)?(.+)$/);
+    if (m) {
+      nome = m[1];
+    } else {
+      m = o.match(/(?:manda|mande|mandar|envia|envie|enviar)\s+(?:uma?\s+)?(?:mensagem|msg|zap|whatsapp|whats)\s+(?:para|pra|pro|ao|a)\s+(?:o\s+|a\s+)?(.+?)(?:\s+no\s+(?:whatsapp|whats|zap))?(?:\s+(?:dizendo|falando|escrevendo|avisando)\s+(?:que\s+)?(.+))?$/);
+      if (m) { nome = m[1]; texto = (m[2] || "").trim(); }
+    }
+    if (!nome) return null;
+    const contato = acharContato(nome);
+    if (!contato) {
+      return citouZap ? { resposta: `Não achei ${nome} nos seus contatos. Cadastre em Configurações, em Contatos do WhatsApp.` } : null;
+    }
+    const url = urlWhatsapp(contato, texto);
+    if (!url) return { resposta: `O número de ${contato.nome} parece incompleto. Use o DDD e o número, como 11 91234-5678.` };
+    return pedido(
+      "celular", "abrir_site", url,
+      texto ? `Abri a conversa com ${contato.nome} com a mensagem pronta. É só enviar.` : `Abrindo a conversa com ${contato.nome}.`
+    );
+  }
+
+  // ----- Bateria do aparelho em que a página está aberta (o celular, no seu caso)
+  async function lerBateria() {
+    if (!navigator.getBattery) return null;
+    try {
+      const b = await navigator.getBattery();
+      return { nivel: Math.round(b.level * 100), carregando: b.charging };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function textoBateria() {
+    const b = await lerBateria();
+    if (!b) return "Este navegador não me deixa ler a bateria.";
+    return `A bateria está em ${b.nivel}%${b.carregando ? " e carregando" : ""}.`;
+  }
+
   // Nome de app seguro para mandar ao Tasker.
   const nomeAppSeguro = (n) => {
     const nome = String(n || "").trim().replace(/\s+/g, " ");
@@ -135,6 +236,13 @@ window.Dispositivos = (() => {
       return pedido("celular", "abrir_site", "https://www.google.com/search?q=" + encodeURIComponent(busca[1]), "Pesquisando no celular.");
     }
 
+    // timer: "cria um timer de 5 minutos", "me avisa daqui a 10 minutos"
+    if (/\b(timer|temporizador)\b/.test(t) || (/\b(avisa|lembra)\b/.test(t) && /\bdaqui a\b/.test(t))) {
+      const seg = segundosDoTimer(t);
+      if (!seg) return { resposta: "De quanto tempo? Diga, por exemplo, 5 minutos." };
+      return pedido("celular", "timer", String(seg), `Timer de ${descreverDuracao(seg)}.`);
+    }
+
     // alarme: "me acorda às 7h", "alarme para 7:30"
     if (/\b(alarme|despertador|acorda|acordar|desperta|despertar)\b/.test(t)) {
       const hora = horaDoAlarme(t, original);
@@ -166,11 +274,17 @@ window.Dispositivos = (() => {
 
     const noPc = rePc.test(t);
 
+    // ----- bateria (lida no próprio aparelho, sem Tasker)
+    if (/\bbateria\b/.test(t) && !noPc
+      && (/\b(celular|telefone)\b/.test(t) || /\b(quanto|qual|nivel|como|carga|porcentagem|tenho|resta|restam|sobrou)\b/.test(t))) {
+      return { local: "bateria" };
+    }
+
     // ----- celular
     if (!noPc) {
-      const c = comandoCelular(t, texto);
+      const c = comandoWhatsapp(texto) || comandoCelular(t, texto);
       if (c) {
-        if (!cfg.topicoCelular) {
+        if (c.acao && !cfg.topicoCelular) {
           return { resposta: "Ainda não sei falar com o seu celular. Abra a engrenagem, preencha o tópico do celular em Dispositivos e toque em Salvar." };
         }
         return c;
@@ -249,15 +363,36 @@ window.Dispositivos = (() => {
     if (cfg.topicoCelular) {
       lista.push({
         name: "controlar_celular",
-        description: "Executa uma ação no celular Android do usuário: lanterna, volume de mídia, modo silencioso, som normal, abrir site, abrir app, alarme e controle de música. Use quando ele pedir.",
+        description: "Executa uma ação no celular Android do usuário: lanterna, volume de mídia, modo silencioso, som normal, abrir site, abrir app, alarme, timer e controle de música. Use quando ele pedir.",
         parameters: {
           type: "OBJECT",
           properties: {
             acao: { type: "STRING", description: "Ação a executar.", enum: [...ACOES_CELULAR] },
-            valor: { type: "STRING", description: "Para volume_midia: nível de 0 a 15. Para abrir_site: endereço do site. Para abrir_app: nome do app (ex.: whatsapp). Para alarme: hora no formato HH:MM. Vazio nas outras ações." },
+            valor: { type: "STRING", description: "Para volume_midia: nível de 0 a 15. Para abrir_site: endereço do site. Para abrir_app: nome do app (ex.: whatsapp). Para alarme: hora no formato HH:MM. Para timer: duração em segundos. Vazio nas outras ações." },
           },
           required: ["acao"],
         },
+      });
+    }
+    if (cfg.topicoCelular && contatos().length) {
+      lista.push({
+        name: "abrir_whatsapp",
+        description: "Abre no celular a conversa do WhatsApp com um contato cadastrado, com uma mensagem opcional já escrita (o usuário só precisa enviar). Contatos: "
+          + contatos().map((c) => c.nome).join(", ") + ".",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            contato: { type: "STRING", description: "Nome do contato." },
+            mensagem: { type: "STRING", description: "Mensagem opcional para deixar escrita." },
+          },
+          required: ["contato"],
+        },
+      });
+    }
+    if (navigator.getBattery) {
+      lista.push({
+        name: "ler_bateria",
+        description: "Lê o nível de bateria do aparelho em que o usuário está falando e se ele está carregando.",
       });
     }
     if (cfg.topicoPc) {
@@ -286,6 +421,22 @@ window.Dispositivos = (() => {
 
   // Executa a chamada pedida pelo modelo e devolve o resultado para ele.
   async function executar(nome, args = {}) {
+    if (nome === "ler_bateria") {
+      const b = await lerBateria();
+      return b || { erro: "Este navegador não permite ler a bateria." };
+    }
+    if (nome === "abrir_whatsapp") {
+      const contato = acharContato(args.contato);
+      if (!contato) return { erro: `Contato não encontrado. Os cadastrados são: ${contatos().map((c) => c.nome).join(", ") || "nenhum"}.` };
+      const url = urlWhatsapp(contato, String(args.mensagem || "").trim());
+      if (!url) return { erro: "O número desse contato está incompleto." };
+      try {
+        await enviar("celular", "abrir_site", url);
+        return { resultado: "Conversa aberta no celular; o usuário precisa tocar em enviar." };
+      } catch (e) {
+        return { erro: e.message };
+      }
+    }
     const alvo = nome === "controlar_pc" ? "pc" : nome === "controlar_celular" ? "celular" : null;
     if (!alvo) return { erro: `Ferramenta desconhecida: ${nome}` };
     const acao = String(args.acao || "");
@@ -310,6 +461,11 @@ window.Dispositivos = (() => {
       if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return { erro: "Informe a hora do alarme no formato HH:MM." };
       valorFinal = `${m[1].padStart(2, "0")}:${m[2]}`;
     }
+    if (alvo === "celular" && acao === "timer") {
+      const n = Math.round(Number(valor));
+      if (!Number.isFinite(n) || n < 1 || n > 86400) return { erro: "Informe a duração do timer em segundos (1 a 86400)." };
+      valorFinal = String(n);
+    }
     if (alvo === "celular" && acao === "volume_midia") {
       const n = Number(valor);
       if (!Number.isFinite(n)) return { erro: "Informe o nível do volume, de 0 a 15." };
@@ -323,5 +479,5 @@ window.Dispositivos = (() => {
     }
   }
 
-  return { interpretar, enviar, limparTopico, declaracoes, executar };
+  return { interpretar, enviar, limparTopico, declaracoes, executar, textoBateria };
 })();

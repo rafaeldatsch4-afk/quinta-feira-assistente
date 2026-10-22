@@ -36,6 +36,21 @@ No código, as ações do celular que o Tasker já sabe fazer ficam em `ACOES_CE
 
 As seções abaixo mostram a outra forma, em que o agente do n8n decide a ação com ferramentas.
 
+### Sem Tasker: WhatsApp e bateria
+
+- **Conversa no WhatsApp:** cadastre os contatos em Configurações → *Contatos do WhatsApp* (uma linha por
+  contato: `nome=número com DDD`). Aí vale "abre a conversa com o João no WhatsApp" e "manda mensagem para a
+  Maria dizendo que estou chegando". Ela abre a conversa com a mensagem pronta; **você toca em enviar**
+  (nada é enviado sozinho). Usa a ação `abrir_site`, sem Tasker novo.
+- **Bateria:** "quanto de bateria eu tenho?" lê a bateria do aparelho em que a página está aberta (o celular, no
+  Chrome). Não usa Tasker nem ntfy.
+
+### Wi-Fi e Bluetooth: limite do Android
+
+O Android bloqueia que apps liguem o Wi-Fi (desde o Android 10) e o Bluetooth (desde o 13). O Tasker só
+consegue com o app auxiliar *Tasker Settings* e permissões dadas por ADB, e em alguns aparelhos nem assim.
+Por isso essas ações não estão incluídas.
+
 ## 1. Escolha os tópicos secretos
 
 Os tópicos funcionam como senha: quem souber o nome pode mandar ações. Use nomes longos
@@ -122,6 +137,7 @@ por causa de um pedido antigo.
 | `nao_perturbe_desligar` | Audio → **Do Not Disturb** | Mode: Allow All |
 | `abrir_app` | App → **Launch App** | Package/App Name: `%pedido2` |
 | `abrir_site` | **Navegar URL** (*Browse URL*) | URL: `%pedido2` (o Android pode pedir "Exibir sobre outros apps") |
+| `timer` | **Enviar Intent** (*Send Intent*) | Ação: `android.intent.action.SET_TIMER`; Extras: `android.intent.extra.alarm.LENGTH:%pedido2` e `android.intent.extra.alarm.SKIP_UI:true`; Alvo: Atividade |
 | `abrir_app` | **Carregar App** (*Load App*) | App: `%pedido2` (nome do app, ex.: `whatsapp`) |
 | `alarme` | 1) **Dividir variável** `%pedido2` com divisor `:` (cria `%pedido21` hora e `%pedido22` minuto); 2) **Definir Alarme** (*Set Alarm*) | Horas: `%pedido21`, Minutos: `%pedido22` |
 | `midia_tocar_pausar` | **Controle de Mídia** (*Media Control*) | Cmd: alternar pausa (*Toggle Pause*) |

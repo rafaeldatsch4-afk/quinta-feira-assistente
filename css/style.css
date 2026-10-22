@@ -371,6 +371,12 @@ body[data-estado="ouvindo"] .botao-mic {
   border: 1px solid var(--borda); background: rgba(79, 227, 255, 0.04);
   color: var(--texto); font: inherit; font-size: 15px; outline: 0;
 }
+.campo-config textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px; resize: vertical;
+  border: 1px solid var(--borda); background: rgba(79, 227, 255, 0.04);
+  color: var(--texto); font: inherit; font-size: 15px; outline: 0;
+}
+.campo-config textarea:focus { border-color: var(--ciano); }
 .campo-config select option { background: var(--fundo-2); }
 .campo-config input:focus, .campo-config select:focus { border-color: var(--ciano); }
 .campo-config input[type="range"] { accent-color: var(--ciano); }

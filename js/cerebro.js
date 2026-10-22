@@ -265,6 +265,7 @@ window.Cerebro = (() => {
     const disp = window.Dispositivos && window.Dispositivos.interpretar(texto);
     if (disp) {
       let resposta = { texto: disp.resposta, local: true };
+      if (disp.local === "bateria") resposta = { texto: await window.Dispositivos.textoBateria(), local: true };
       if (disp.acao) {
         try {
           await window.Dispositivos.enviar(disp.alvo, disp.acao, disp.valor);

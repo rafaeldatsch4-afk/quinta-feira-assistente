@@ -501,6 +501,7 @@
     f.token.value = cfg.token;
     f.topicoCelular.value = cfg.topicoCelular || "";
     f.topicoPc.value = cfg.topicoPc || "";
+    f.contatos.value = cfg.contatos || "";
     f.ntfyServidor.value = cfg.ntfyServidor || "https://ntfy.sh";
     $("#resultado-celular").textContent = "";
     f.geminiKey.value = cfg.geminiKey || "";
@@ -570,6 +571,7 @@
       topicoCelular: window.Dispositivos.limparTopico(f.topicoCelular.value),
       topicoPc: window.Dispositivos.limparTopico(f.topicoPc.value),
       ntfyServidor: f.ntfyServidor.value.trim() || "https://ntfy.sh",
+      contatos: f.contatos.value.trim(),
       geminiKey: f.geminiKey.value.trim(),
       liveModelo: f.liveModelo.value.trim() || "gemini-3.8-live",
       voz: f.voz.value,

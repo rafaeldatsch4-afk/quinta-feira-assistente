@@ -21,6 +21,8 @@ window.QF_PADRAO = {
   ntfyServidor: "https://ntfy.sh",
   topicoCelular: "",
   topicoPc: "",
+  // Contatos do WhatsApp, uma linha por contato: nome=número com DDD.
+  contatos: "",
   voz: "",
   velocidade: 1,
   tom: 1,
