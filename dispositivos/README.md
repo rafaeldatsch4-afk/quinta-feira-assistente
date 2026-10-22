@@ -73,11 +73,12 @@ Não publique esses nomes em lugar nenhum.
 
 1. Instale o [Python](https://www.python.org/downloads/) marcando **Add Python to PATH**.
 2. Baixe a pasta `dispositivos/pc` deste repositório.
-3. Copie `config.exemplo.json` para `config.json` e edite:
-   - `topico`: o seu tópico do PC.
+3. Dê dois cliques em `testar_quinta_pc.bat`. Na primeira vez ele pede o **tópico do PC**:
+   cole e aperte Enter (o `config.json` é criado sozinho). A janela fica mostrando o que
+   chegar, sem executar nada. Feche quando terminar o teste.
+4. Se quiser, edite o `config.json`:
    - `apps`: os apps que ela pode abrir (nome falado → caminho do .exe, atalho ou comando).
    - `comandos`: comandos seus com nome (ex.: `"modo jogo"`). Só esses podem ser rodados.
-4. Teste sem executar nada: `python quinta_pc.py --teste`
 5. Rode de verdade: dois cliques em `iniciar_quinta_pc.bat` (roda sem janela).
 6. Para iniciar com o Windows: `Win + R` → `shell:startup` → cole ali um atalho do `.bat`.
 

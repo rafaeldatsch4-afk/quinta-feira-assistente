@@ -9,6 +9,8 @@ cadastrou no config.json. Nada que venha da IA é executado como comando livre.
 Uso:
     python quinta_pc.py            # executa as ações
     python quinta_pc.py --teste    # só mostra o que faria, sem executar
+
+Na primeira vez ele pergunta o tópico e cria o config.json sozinho.
 """
 
 import json
@@ -48,10 +50,28 @@ def normalizar(texto):
     return texto.lower().strip()
 
 
+def criar_config(caminho):
+    """Na primeira vez, pergunta o tópico e cria o config.json a partir do exemplo."""
+    print("Primeira vez por aqui: vou criar o config.json.")
+    try:
+        topico = input("Cole aqui o tópico do PC e aperte Enter: ")
+    except EOFError:  # aberto sem janela (pythonw): não dá para perguntar
+        sys.exit("Rode primeiro o testar_quinta_pc.bat para cadastrar o tópico.")
+    topico = "".join(c for c in topico.strip().rstrip(".") if c.isascii() and (c.isalnum() or c in "-_"))
+    if len(topico) < 8:
+        sys.exit("Tópico inválido. Rode de novo e cole o tópico completo (ex.: quinta-abc123-pc).")
+    with open(os.path.join(PASTA, "config.exemplo.json"), encoding="utf-8") as f:
+        cfg = json.load(f)
+    cfg["topico"] = topico
+    with open(caminho, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+    print(f"Pronto! Tópico salvo em {caminho}")
+
+
 def carregar_config():
     caminho = os.path.join(PASTA, "config.json")
     if not os.path.exists(caminho):
-        sys.exit("Crie o config.json (copie o config.exemplo.json) e coloque o seu tópico.")
+        criar_config(caminho)
     with open(caminho, encoding="utf-8") as f:
         cfg = json.load(f)
     if not cfg.get("topico") or "TROQUE" in cfg["topico"]:
