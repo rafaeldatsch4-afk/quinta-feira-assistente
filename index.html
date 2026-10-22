@@ -150,9 +150,29 @@
       </label>
 
       <label class="campo-config">
-        <span>Token de autenticação (opcional)</span>
-        <input type="password" name="token" placeholder="Enviado no cabeçalho Authorization">
-        <small>Use com <i>Header Auth</i> no Webhook do n8n para que só você acesse.</small>
+        <span>Autenticação do webhook</span>
+        <select name="authTipo">
+          <option value="basic">Basic Auth (usuário e senha)</option>
+          <option value="bearer">Header Auth (token Bearer)</option>
+          <option value="nenhuma">Nenhuma</option>
+        </select>
+        <small>Use o mesmo tipo escolhido em <i>Authentication</i> no nó Webhook do n8n. As credenciais ficam salvas só neste navegador.</small>
+      </label>
+
+      <div class="linha-config" data-auth="basic">
+        <label class="campo-config">
+          <span>Usuário</span>
+          <input type="text" name="authUsuario" autocomplete="username">
+        </label>
+        <label class="campo-config">
+          <span>Senha</span>
+          <input type="password" name="authSenha" autocomplete="current-password">
+        </label>
+      </div>
+
+      <label class="campo-config" data-auth="bearer">
+        <span>Token</span>
+        <input type="password" name="token" placeholder="Enviado como Authorization: Bearer …">
       </label>
 
       <div class="linha-teste">

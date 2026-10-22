@@ -5,8 +5,12 @@ window.QF_PADRAO = {
   nomeUsuario: "Chefe",
   // URL de produção do nó Webhook do seu workflow no n8n.
   // Ex.: "https://seu-n8n.com/webhook/quinta-feira"
-  webhookUrl: "",
-  // Token opcional enviado como "Authorization: Bearer <token>".
+  webhookUrl: "https://quinta-feira-assistente.app.n8n.cloud/webhook/quinta-feira",
+  // Autenticação do Webhook: "nenhuma", "basic" (usuário e senha) ou "bearer" (token).
+  // As credenciais ficam só no navegador; preencha pela tela de Configurações.
+  authTipo: "basic",
+  authUsuario: "",
+  authSenha: "",
   token: "",
   voz: "",
   velocidade: 1,
@@ -20,6 +24,8 @@ window.QF_CONFIG = (() => {
   const CHAVE = "quinta-feira:config";
   let salvo = {};
   try { salvo = JSON.parse(localStorage.getItem(CHAVE) || "{}"); } catch (_) {}
+  // Configurações antigas só tinham "token" (Bearer).
+  if (salvo.token && !salvo.authTipo) salvo.authTipo = "bearer";
   const cfg = { ...window.QF_PADRAO, ...salvo };
 
   cfg.salvar = (novos) => {

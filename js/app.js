@@ -369,10 +369,26 @@
   f.velocidade.addEventListener("input", () => (outVel.textContent = Number(f.velocidade.value).toFixed(1)));
   f.tom.addEventListener("input", () => (outTom.textContent = Number(f.tom.value).toFixed(1)));
 
+  const authDoFormulario = () => ({
+    authTipo: f.authTipo.value,
+    authUsuario: f.authUsuario.value.trim(),
+    authSenha: f.authSenha.value,
+    token: f.token.value.trim(),
+  });
+
+  function mostrarCamposAuth() {
+    document.querySelectorAll("[data-auth]").forEach((c) => (c.hidden = c.dataset.auth !== f.authTipo.value));
+  }
+  f.authTipo.addEventListener("change", mostrarCamposAuth);
+
   $("#botao-config").addEventListener("click", () => {
     f.nomeUsuario.value = cfg.nomeUsuario;
     f.webhookUrl.value = cfg.webhookUrl;
+    f.authTipo.value = cfg.authTipo;
+    f.authUsuario.value = cfg.authUsuario;
+    f.authSenha.value = cfg.authSenha;
     f.token.value = cfg.token;
+    mostrarCamposAuth();
     f.velocidade.value = cfg.velocidade; outVel.textContent = Number(cfg.velocidade).toFixed(1);
     f.tom.value = cfg.tom; outTom.textContent = Number(cfg.tom).toFixed(1);
     f.falarRespostas.checked = cfg.falarRespostas;
@@ -385,18 +401,14 @@
     const saida = $("#resultado-teste");
     const url = f.webhookUrl.value.trim();
     if (!url) { saida.className = "resultado-teste falha"; saida.textContent = "Informe a URL do webhook."; return; }
-    const tokenAnterior = cfg.token;
-    cfg.token = f.token.value.trim();
     saida.className = "resultado-teste"; saida.textContent = "Testando…";
     try {
-      const r = await window.Cerebro.testarConexao(url);
+      const r = await window.Cerebro.testarConexao(url, authDoFormulario());
       saida.className = "resultado-teste ok";
       saida.textContent = `✓ Conectado: "${r.slice(0, 60)}${r.length > 60 ? "…" : ""}"`;
     } catch (e) {
       saida.className = "resultado-teste falha";
       saida.textContent = `✗ ${e.message}`;
-    } finally {
-      cfg.token = tokenAnterior;
     }
   });
 
@@ -406,7 +418,7 @@
     cfg.salvar({
       nomeUsuario: f.nomeUsuario.value.trim() || "Chefe",
       webhookUrl: f.webhookUrl.value.trim(),
-      token: f.token.value.trim(),
+      ...authDoFormulario(),
       voz: f.voz.value,
       velocidade: Number(f.velocidade.value),
       tom: Number(f.tom.value),

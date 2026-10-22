@@ -76,7 +76,11 @@ ou texto puro.
 ### Dicas
 
 - **CORS:** se a interface estiver em outro domínio que o n8n, defina *Allowed Origins (CORS)* no nó Webhook (o exemplo já vem com `*`).
-- **Segurança:** em *Authentication* do Webhook, escolha *Header Auth* com nome `Authorization` e valor `Bearer SEU_TOKEN`, e coloque `SEU_TOKEN` no campo **Token** da interface.
+- **Segurança:** a interface suporta os dois tipos de *Authentication* do Webhook:
+  - *Basic Auth*: escolha **Basic Auth** nas Configurações e informe o mesmo usuário e senha da credencial do n8n.
+  - *Header Auth*: crie a credencial com nome `Authorization` e valor `Bearer SEU_TOKEN`, escolha **Header Auth** e coloque `SEU_TOKEN` no campo **Token**.
+
+  As credenciais ficam salvas só no navegador (localStorage), nunca no código.
 - **Ferramentas:** conecte tools ao AI Agent (Google Calendar, Gmail, HTTP Request, clima…) para a Quinta-Feira executar tarefas de verdade.
 - As configurações ficam salvas no navegador (localStorage). Para deixar uma URL padrão para todos, edite `js/config.js`.
 

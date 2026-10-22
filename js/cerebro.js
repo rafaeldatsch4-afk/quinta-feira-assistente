@@ -37,11 +37,24 @@ window.Cerebro = (() => {
     };
   }
 
-  async function chamarN8n(texto, url = cfg.webhookUrl) {
+  const base64 = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+
+  function cabecalhoAuth(a) {
+    if (a.authTipo === "basic" && (a.authUsuario || a.authSenha)) {
+      return `Basic ${base64(`${a.authUsuario}:${a.authSenha}`)}`;
+    }
+    if (a.authTipo === "bearer" && a.token) return `Bearer ${a.token}`;
+    return null;
+  }
+
+  // "opcoes" permite testar uma URL/credencial antes de salvar.
+  async function chamarN8n(texto, opcoes = {}) {
+    const url = opcoes.url || cfg.webhookUrl;
     const controle = new AbortController();
     const timer = setTimeout(() => controle.abort(), cfg.timeoutMs);
     const headers = { "Content-Type": "application/json" };
-    if (cfg.token) headers.Authorization = `Bearer ${cfg.token}`;
+    const auth = cabecalhoAuth(opcoes.auth || cfg);
+    if (auth) headers.Authorization = auth;
 
     try {
       const res = await fetch(url, {
@@ -57,6 +70,12 @@ window.Cerebro = (() => {
           origem: "quinta-feira-ui",
         }),
       });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("O n8n recusou a autenticação. Confira usuário e senha (ou token) em Configurações.");
+      }
+      if (res.status === 404) {
+        throw new Error("Webhook não encontrado (404). Verifique se o workflow está ativo e se a URL é a de produção.");
+      }
       if (!res.ok) throw new Error(`n8n respondeu ${res.status} ${res.statusText}`);
       const bruto = await res.text();
       let dados = bruto;
@@ -220,8 +239,8 @@ window.Cerebro = (() => {
     return resposta;
   }
 
-  async function testarConexao(url) {
-    const r = await chamarN8n("ping", url);
+  async function testarConexao(url, auth) {
+    const r = await chamarN8n("ping", { url, auth });
     return r.texto;
   }
 

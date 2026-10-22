@@ -351,6 +351,7 @@ body[data-estado="ouvindo"] .botao-mic {
 .campo-config input:focus, .campo-config select:focus { border-color: var(--ciano); }
 .campo-config input[type="range"] { accent-color: var(--ciano); }
 .linha-config { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.modal [hidden] { display: none; }
 .campo-check { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--texto-2); }
 .campo-check input { accent-color: var(--ciano); width: 16px; height: 16px; }
 
