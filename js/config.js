@@ -16,6 +16,11 @@ window.QF_PADRAO = {
   // A chave fica só no navegador; preencha pela tela de Configurações.
   geminiKey: "",
   liveModelo: "gemini-3.8-live",
+  // Dispositivos (ntfy): tópicos secretos do celular (Tasker) e do PC.
+  // Ficam só no navegador; preencha pela tela de Configurações.
+  ntfyServidor: "https://ntfy.sh",
+  topicoCelular: "",
+  topicoPc: "",
   voz: "",
   velocidade: 1,
   tom: 1,

@@ -260,6 +260,22 @@ window.Cerebro = (() => {
 
   async function perguntar(texto) {
     historico.push({ papel: "usuario", texto });
+
+    // Comandos para o celular/PC ("liga a lanterna") são resolvidos aqui, sem passar pelo n8n.
+    const disp = window.Dispositivos && window.Dispositivos.interpretar(texto);
+    if (disp) {
+      let resposta = { texto: disp.resposta, local: true };
+      if (disp.acao) {
+        try {
+          await window.Dispositivos.enviar(disp.alvo, disp.acao, disp.valor);
+        } catch (e) {
+          resposta = { texto: "Não consegui enviar o comando.", local: true, erro: e.message };
+        }
+      }
+      historico.push({ papel: "assistente", texto: resposta.texto });
+      return resposta;
+    }
+
     let resposta;
     if (cfg.webhookUrl) {
       try {

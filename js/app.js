@@ -201,7 +201,7 @@
   // Fala a resposta e devolve qual voz foi usada, para a interface mostrar no chat.
   async function falar(texto, resposta = {}) {
     if (!cfg.falarRespostas) return null;
-    let motivo = "o n8n não enviou áudio";
+    let motivo = resposta.local ? "resposta local, sem n8n" : "o n8n não enviou áudio";
     if (resposta.campos?.length) motivo += ` (veio só: ${resposta.campos.join(", ")})`;
     if (resposta.audio || resposta.audioUrl) {
       try { await tocarAudio(resposta); return { voz: "neural" }; }
@@ -233,6 +233,11 @@
     const tipo = acao.tipo || acao.type;
     if ((tipo === "abrir_url" || tipo === "open_url") && acao.url) {
       window.open(acao.url, "_blank", "noopener");
+    }
+    // O n8n também pode pedir ações nos dispositivos: { tipo: "dispositivo", alvo: "celular"|"pc", acao, valor }
+    if (tipo === "dispositivo" && (acao.alvo === "celular" || acao.alvo === "pc") && acao.acao) {
+      window.Dispositivos.enviar(acao.alvo, acao.acao, acao.valor || "")
+        .catch((e) => adicionarMensagem("ia", `⚠ ${e.message}`, "erro"));
     }
   }
 
@@ -494,6 +499,10 @@
     f.authUsuario.value = cfg.authUsuario;
     f.authSenha.value = cfg.authSenha;
     f.token.value = cfg.token;
+    f.topicoCelular.value = cfg.topicoCelular || "";
+    f.topicoPc.value = cfg.topicoPc || "";
+    f.ntfyServidor.value = cfg.ntfyServidor || "https://ntfy.sh";
+    $("#resultado-celular").textContent = "";
     f.geminiKey.value = cfg.geminiKey || "";
     f.liveModelo.value = cfg.liveModelo || "gemini-3.8-live";
     mostrarCamposAuth();
@@ -524,6 +533,26 @@
     }
   });
 
+  $("#testar-celular").addEventListener("click", async () => {
+    const saida = $("#resultado-celular");
+    const topico = f.topicoCelular.value.trim();
+    if (!topico) { saida.className = "resultado-teste falha"; saida.textContent = "Informe o tópico do celular."; return; }
+    saida.className = "resultado-teste"; saida.textContent = "Enviando…";
+    const servidor = cfg.ntfyServidor;
+    cfg.ntfyServidor = f.ntfyServidor.value.trim() || "https://ntfy.sh";
+    try {
+      await window.Dispositivos.enviar("celular", "lanterna_ligar", "", topico);
+      saida.className = "resultado-teste ok";
+      saida.textContent = "✓ Enviado: a lanterna deve acender e apagar sozinha.";
+      setTimeout(() => window.Dispositivos.enviar("celular", "lanterna_desligar", "", topico).catch(() => {}), 2500);
+    } catch (e) {
+      saida.className = "resultado-teste falha";
+      saida.textContent = `✗ ${e.message}`;
+    } finally {
+      cfg.ntfyServidor = servidor;
+    }
+  });
+
   // "submit" dispara antes do diálogo fechar, então a config já vale na próxima mensagem.
   el.formConfig.addEventListener("submit", (e) => {
     if (e.submitter?.value !== "salvar") return;
@@ -531,6 +560,9 @@
       nomeUsuario: f.nomeUsuario.value.trim() || "Chefe",
       webhookUrl: f.webhookUrl.value.trim(),
       ...authDoFormulario(),
+      topicoCelular: f.topicoCelular.value.trim(),
+      topicoPc: f.topicoPc.value.trim(),
+      ntfyServidor: f.ntfyServidor.value.trim() || "https://ntfy.sh",
       geminiKey: f.geminiKey.value.trim(),
       liveModelo: f.liveModelo.value.trim() || "gemini-3.8-live",
       voz: f.voz.value,

@@ -163,6 +163,7 @@ js/config.js                   configurações padrão e persistência
 js/nucleo.js                   animação do núcleo (canvas)
 js/cerebro.js                  integração com o n8n + modo offline
 js/live.js                     modo Live (Gemini Live API em tempo real)
+js/dispositivos.js             comandos para celular (Tasker) e PC via ntfy
 js/app.js                      voz, chat, painéis e configurações
 n8n/quinta-feira-workflow.json workflow de exemplo para importar
 dispositivos/                  ações no celular (Tasker) e no PC (quinta_pc.py)

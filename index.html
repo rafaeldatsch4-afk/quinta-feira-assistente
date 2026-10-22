@@ -178,6 +178,27 @@
       </label>
 
       <fieldset class="grupo-config">
+        <legend>Dispositivos (ntfy)</legend>
+        <label class="campo-config">
+          <span>Tópico do celular</span>
+          <input type="text" name="topicoCelular" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="quinta-…-celular">
+          <small>Mesmo nome que você inscreveu no app ntfy do celular. Funciona como senha.</small>
+        </label>
+        <label class="campo-config">
+          <span>Tópico do PC (opcional)</span>
+          <input type="text" name="topicoPc" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="quinta-…-pc">
+        </label>
+        <label class="campo-config">
+          <span>Servidor ntfy</span>
+          <input type="url" name="ntfyServidor" autocomplete="off" autocapitalize="none" placeholder="https://ntfy.sh">
+        </label>
+        <div class="linha-teste">
+          <button type="button" class="botao-sec" id="testar-celular">Testar lanterna</button>
+          <span class="resultado-teste" id="resultado-celular"></span>
+        </div>
+      </fieldset>
+
+      <fieldset class="grupo-config">
         <legend>Modo Live (Gemini)</legend>
         <label class="campo-config">
           <span>Chave do Google</span>
@@ -229,6 +250,7 @@
 
   <script src="js/config.js"></script>
   <script src="js/nucleo.js"></script>
+  <script src="js/dispositivos.js"></script>
   <script src="js/cerebro.js"></script>
   <script src="js/live.js"></script>
   <script src="js/app.js"></script>

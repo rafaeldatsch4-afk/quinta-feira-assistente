@@ -13,6 +13,29 @@ mensagem curta no formato `acao|valor` (ex.: `abrir_app|spotify`) num tópico do
 [ntfy](https://ntfy.sh). O celular e o PC ficam escutando seus tópicos e executam só as
 ações da lista. Nada que venha da IA vira comando livre.
 
+## Jeito mais simples: direto pela interface (sem mexer no n8n)
+
+A própria Quinta-Feira entende comandos como **"liga a lanterna"** e manda a ação ao ntfy
+direto do navegador, sem passar pelo n8n. É instantâneo e não gasta o limite do ntfy do n8n cloud.
+
+1. Faça o passo 1 (tópicos), o passo 3 (celular) e/ou o passo 2 (PC) abaixo.
+2. Na Quinta-Feira, abra a **engrenagem** → **Dispositivos (ntfy)**, preencha o **Tópico do celular**
+   (e do PC, se tiver) e toque em **Testar lanterna**.
+3. Fale ou escreva: "liga a lanterna", "apaga a lanterna".
+
+Com o tópico do PC configurado, ela entende também: "bloqueia o PC", "aumenta/abaixa o volume do PC",
+"muta o PC", "próxima música no PC", "pausa a música no computador", "abre o Spotify no PC",
+"abre o site youtube.com no PC", "pesquisa X no computador". "Desliga/reinicia o PC" pede
+confirmação: ela pergunta e só executa se você responder "sim". Comandos do PC precisam da palavra
+*PC*, *computador* ou *notebook* na frase.
+
+No código, as ações do celular que o Tasker já sabe fazer ficam em `ACOES_CELULAR`
+(`js/dispositivos.js`). Ao criar uma ação nova no Tasker, acrescente o nome lá e uma frase em
+`interpretar`. Para o agente do n8n também pedir ações, ele pode responder com
+`"acao": { "tipo": "dispositivo", "alvo": "celular", "acao": "lanterna_ligar" }`.
+
+As seções abaixo mostram a outra forma, em que o agente do n8n decide a ação com ferramentas.
+
 ## 1. Escolha os tópicos secretos
 
 Os tópicos funcionam como senha: quem souber o nome pode mandar ações. Use nomes longos
