@@ -10,7 +10,14 @@ Interface de assistente pessoal no estilo J.A.R.V.I.S., com o cérebro rodando n
 
 É só HTML, CSS e JavaScript, sem build e sem dependências.
 
-## Como rodar
+## Abrir online
+
+**https://rafaeldatsch4-afk.github.io/quinta-feira-assistente/**
+
+Funciona no computador e no celular (Chrome ou Edge). O site é atualizado
+automaticamente pelo GitHub Actions (`.github/workflows/pages.yml`) a cada push.
+
+## Como rodar localmente
 
 O microfone só funciona em `localhost` ou HTTPS, então sirva a pasta com um servidor local:
 
