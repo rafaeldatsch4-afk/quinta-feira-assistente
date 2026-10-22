@@ -49,19 +49,41 @@ window.Live = (() => {
     fimFila = 0;
   }
 
-  function instrucoes() {
+  function instrucoes(comFerramentas) {
     const nome = cfg.nomeUsuario || "Chefe";
     const agora = new Date().toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" });
     return (
       `Você é a Quinta-Feira, assistente pessoal de ${nome}, no estilo do J.A.R.V.I.S. ` +
       "Fale sempre em português do Brasil, de forma natural, curta, confiante e simpática. " +
-      `Chame o usuário de ${nome}. Data e hora atuais: ${agora}.`
+      `Chame o usuário de ${nome}. Data e hora atuais: ${agora}.` +
+      (comFerramentas
+        ? " Você controla o celular e o PC do usuário com as ferramentas controlar_celular e controlar_pc: " +
+          "use-as sempre que ele pedir uma dessas ações, sem explicar o processo, e confirme em uma frase curta. " +
+          "Antes de desligar ou reiniciar o PC, pergunte se ele confirma."
+        : "")
     );
+  }
+
+  // Executa as ferramentas pedidas pelo modelo e devolve o resultado.
+  async function responderFerramentas(chamadas) {
+    const respostas = [];
+    for (const c of chamadas) {
+      const resposta = await window.Dispositivos.executar(c.name, c.args || {});
+      if (resposta.erro && !resposta.silencioso) avisar("aviso", resposta.erro);
+      respostas.push({ id: c.id, name: c.name, response: resposta });
+    }
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ toolResponse: { functionResponses: respostas } }));
+    }
   }
 
   function tratarMensagem(m, pronto) {
     if (m.setupComplete) return pronto();
     if (m.goAway) avisar("aviso", "A sessão Live vai encerrar em instantes (limite do Google).");
+    if (m.toolCall && m.toolCall.functionCalls && m.toolCall.functionCalls.length) {
+      responderFerramentas(m.toolCall.functionCalls);
+      return;
+    }
     const sc = m.serverContent;
     if (!sc) return;
     if (sc.interrupted) calar();
@@ -71,6 +93,46 @@ window.Live = (() => {
       if (p.inlineData?.data) tocarPcm(p.inlineData.data);
     }
     if (sc.turnComplete) avisar("fimTurno");
+  }
+
+  // Abre o WebSocket e espera o "setupComplete". Rejeita se fechar antes disso.
+  function conectar(ferramentas) {
+    return new Promise((ok, falha) => {
+      let aberto = false;
+      const socket = new WebSocket(`${URL_LIVE}?key=${encodeURIComponent(cfg.geminiKey)}`);
+      ws = socket;
+      socket.onopen = () => {
+        aberto = true;
+        const setup = {
+          model: `models/${cfg.liveModelo || "gemini-3.8-live"}`,
+          generationConfig: { responseModalities: ["AUDIO"] },
+          systemInstruction: { parts: [{ text: instrucoes(ferramentas.length > 0) }] },
+          inputAudioTranscription: {},
+          outputAudioTranscription: {},
+        };
+        if (ferramentas.length) setup.tools = [{ functionDeclarations: ferramentas }];
+        socket.send(JSON.stringify({ setup }));
+      };
+      socket.onmessage = async (ev) => {
+        const t = ev.data instanceof Blob ? await ev.data.text() : ev.data;
+        let m;
+        try { m = JSON.parse(t); } catch (_) { return; }
+        tratarMensagem(m, ok);
+      };
+      socket.onerror = () => {
+        if (!aberto) falha(new Error("Não consegui conectar ao Gemini Live. Confira a chave e a internet."));
+      };
+      socket.onclose = (e) => {
+        if (!ativo) {
+          const erro = new Error(`O Gemini Live recusou a conexão${e.reason ? `: ${e.reason}` : ""}. Confira a chave e o nome do modelo.`);
+          erro.recusado = true;
+          falha(erro);
+        } else {
+          if (e.reason) avisar("aviso", `Modo Live encerrado: ${e.reason}`);
+          parar();
+        }
+      };
+    });
   }
 
   async function iniciar(handlers = {}) {
@@ -87,41 +149,19 @@ window.Live = (() => {
     saida.fftSize = 256;
     saida.connect(ctxOut.destination);
 
-    ws = new WebSocket(`${URL_LIVE}?key=${encodeURIComponent(cfg.geminiKey)}`);
-    await new Promise((ok, falha) => {
-      let aberto = false;
-      ws.onopen = () => {
-        aberto = true;
-        ws.send(JSON.stringify({
-          setup: {
-            model: `models/${cfg.liveModelo || "gemini-3.8-live"}`,
-            generationConfig: { responseModalities: ["AUDIO"] },
-            systemInstruction: { parts: [{ text: instrucoes() }] },
-            inputAudioTranscription: {},
-            outputAudioTranscription: {},
-          },
-        }));
-      };
-      ws.onmessage = async (ev) => {
-        const t = ev.data instanceof Blob ? await ev.data.text() : ev.data;
-        let m;
-        try { m = JSON.parse(t); } catch (_) { return; }
-        tratarMensagem(m, ok);
-      };
-      ws.onerror = () => {
-        if (!aberto) falha(new Error("Não consegui conectar ao Gemini Live. Confira a chave e a internet."));
-      };
-      ws.onclose = (e) => {
-        if (!ativo) {
-          falha(new Error(`O Gemini Live recusou a conexão${e.reason ? `: ${e.reason}` : ""}. Confira a chave e o nome do modelo.`));
-        } else {
-          if (e.reason) avisar("aviso", `Modo Live encerrado: ${e.reason}`);
-          parar();
-        }
-      };
-    });
+    // Tenta com as ferramentas dos dispositivos; se o modelo recusar, conversa sem elas.
+    const ferramentas = window.Dispositivos ? window.Dispositivos.declaracoes() : [];
+    let semFerramentas = false;
+    try {
+      await conectar(ferramentas);
+    } catch (e) {
+      if (!ferramentas.length || !e.recusado) throw e;
+      await conectar([]);
+      semFerramentas = true;
+    }
 
     ativo = true;
+    if (semFerramentas) avisar("aviso", "O Gemini Live não aceitou o controle de dispositivos; seguimos só na conversa.");
     ctxMic = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
     await ctxMic.resume();
     const fonte = ctxMic.createMediaStreamSource(stream);

@@ -98,7 +98,10 @@ falando por cima. A conversa aparece escrita no chat (transcrição).
    O modelo padrão é `gemini-3.8-live`.
 3. Toque em **LIVE** para começar e de novo para encerrar.
 
-No modo Live o n8n não é usado, então ferramentas e memória do workflow não valem ali.
+No modo Live o n8n não é usado, então ferramentas e memória do workflow não valem ali. Em
+compensação, o Live controla os **dispositivos**: com o tópico do celular (e do PC) salvo nas
+Configurações, dá para dizer "liga a lanterna" ou "bloqueia o PC" (desligar e reiniciar o PC pedem
+confirmação por voz). Se o modelo não aceitar as ferramentas, o Live avisa e segue só na conversa.
 A chave fica salva só no navegador; o Google recomenda tokens temporários para apps
 públicos, mas para uso pessoal a chave direta funciona. No plano gratuito do Gemini API,
 o modelo Live aparece como gratuito.

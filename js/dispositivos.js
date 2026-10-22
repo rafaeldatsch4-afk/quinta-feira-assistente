@@ -6,6 +6,13 @@ window.Dispositivos = (() => {
   // Ações que o Tasker do celular já sabe executar. Acrescente aqui ao criar novas no Tasker.
   const ACOES_CELULAR = new Set(["lanterna_ligar", "lanterna_desligar"]);
 
+  // Ações que o Quinta-PC aceita (quinta_pc.py). Desligar/reiniciar exigem confirmação.
+  const ACOES_PC = new Set([
+    "abrir_site", "pesquisar", "youtube", "abrir_app", "comando", "volume_mais", "volume_menos", "mudo",
+    "midia_tocar_pausar", "midia_proxima", "midia_anterior", "bloquear", "desligar", "reiniciar", "cancelar_desligamento",
+  ]);
+  const PERIGOSAS = new Set(["desligar", "reiniciar"]);
+
   const norm = (s) =>
     String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
       .replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
@@ -117,5 +124,63 @@ window.Dispositivos = (() => {
     if (!res.ok) throw new Error(`O ntfy respondeu ${res.status}.`);
   }
 
-  return { interpretar, enviar, limparTopico };
+  // Ferramentas (function calling) oferecidas ao modo Live, só para os dispositivos configurados.
+  function declaracoes() {
+    const lista = [];
+    if (cfg.topicoCelular) {
+      lista.push({
+        name: "controlar_celular",
+        description: "Executa uma ação no celular Android do usuário, como ligar ou apagar a lanterna. Use quando ele pedir.",
+        parameters: {
+          type: "OBJECT",
+          properties: { acao: { type: "STRING", description: "Ação a executar.", enum: [...ACOES_CELULAR] } },
+          required: ["acao"],
+        },
+      });
+    }
+    if (cfg.topicoPc) {
+      lista.push({
+        name: "controlar_pc",
+        description: "Executa uma ação no computador (PC) do usuário: abrir apps e sites, volume, mídia, bloquear, desligar. Use quando ele pedir.",
+        parameters: {
+          type: "OBJECT",
+          properties: {
+            acao: { type: "STRING", description: "Ação a executar.", enum: [...ACOES_PC] },
+            valor: {
+              type: "STRING",
+              description: "Endereço do site, termo de pesquisa, nome do app (ex.: spotify), passos de volume ou minutos para desligar. Vazio se não precisar.",
+            },
+            confirmado: {
+              type: "BOOLEAN",
+              description: "true somente depois que o usuário confirmou, em voz, desligar ou reiniciar o PC.",
+            },
+          },
+          required: ["acao"],
+        },
+      });
+    }
+    return lista;
+  }
+
+  // Executa a chamada pedida pelo modelo e devolve o resultado para ele.
+  async function executar(nome, args = {}) {
+    const alvo = nome === "controlar_pc" ? "pc" : nome === "controlar_celular" ? "celular" : null;
+    if (!alvo) return { erro: `Ferramenta desconhecida: ${nome}` };
+    const acao = String(args.acao || "");
+    const valor = args.valor == null ? "" : String(args.valor);
+    if (alvo === "pc") {
+      if (!ACOES_PC.has(acao)) return { erro: `Ação desconhecida: ${acao}` };
+      if (PERIGOSAS.has(acao) && args.confirmado !== true) {
+        return { erro: "Pergunte ao usuário se ele confirma e só depois chame de novo com confirmado=true.", silencioso: true };
+      }
+    }
+    try {
+      await enviar(alvo, acao, valor);
+      return { resultado: "ok" };
+    } catch (e) {
+      return { erro: e.message };
+    }
+  }
+
+  return { interpretar, enviar, limparTopico, declaracoes, executar };
 })();
