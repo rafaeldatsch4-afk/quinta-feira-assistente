@@ -544,7 +544,13 @@
     try {
       await window.Dispositivos.enviar("celular", "lanterna_ligar", "", topico);
       saida.className = "resultado-teste ok";
-      saida.textContent = "✓ Enviado: a lanterna deve acender e apagar sozinha.";
+      // Se o teste funcionou, já guarda os dados para valer nos comandos.
+      cfg.salvar({
+        topicoCelular: topico,
+        topicoPc: window.Dispositivos.limparTopico(f.topicoPc.value),
+        ntfyServidor: f.ntfyServidor.value.trim() || "https://ntfy.sh",
+      });
+      saida.textContent = "✓ Enviado e salvo: a lanterna deve acender e apagar sozinha.";
       setTimeout(() => window.Dispositivos.enviar("celular", "lanterna_desligar", "", topico).catch(() => {}), 2500);
     } catch (e) {
       saida.className = "resultado-teste falha";

@@ -43,9 +43,12 @@ window.Dispositivos = (() => {
     const noPc = rePc.test(t);
 
     // ----- celular
-    if (cfg.topicoCelular && !noPc && /\blanterna\b/.test(t)) {
+    if (!noPc && /\blanterna\b/.test(t) && (reDesligar.test(t) || reLigar.test(t))) {
+      if (!cfg.topicoCelular) {
+        return { resposta: "Ainda não sei falar com o seu celular. Abra a engrenagem, preencha o tópico do celular em Dispositivos e toque em Salvar." };
+      }
       if (reDesligar.test(t)) return pedido("celular", "lanterna_desligar", "", "Lanterna apagada.");
-      if (reLigar.test(t)) return pedido("celular", "lanterna_ligar", "", "Lanterna ligada.");
+      return pedido("celular", "lanterna_ligar", "", "Lanterna ligada.");
     }
 
     // ----- PC
