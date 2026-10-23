@@ -292,7 +292,10 @@ window.Dispositivos = (() => {
     }
 
     // ----- PC
-    if (!cfg.topicoPc || !noPc) return null;
+    if (!noPc) return null;
+    if (!cfg.topicoPc) {
+      return { resposta: "Ainda não sei falar com o seu PC. Abra a engrenagem, preencha o tópico do PC em Dispositivos e toque em Salvar." };
+    }
     const original = String(texto).toLowerCase();
 
     if (/\bcancel(a|e|ar)\b/.test(t) && /\b(desligamento|desligar)\b/.test(t)) {

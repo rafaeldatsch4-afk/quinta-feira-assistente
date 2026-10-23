@@ -17,6 +17,7 @@ import json
 import os
 import platform
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -307,5 +308,18 @@ def escutar(cfg):
             espera = min(espera * 2, 60)
 
 
+def instancia_unica():
+    """Impede duas cópias ao mesmo tempo (cada uma executaria o pedido, e ele sairia em dobro)."""
+    trava = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        trava.bind(("127.0.0.1", 47831))
+    except OSError:
+        log("Já existe outro Quinta-PC rodando; esta cópia vai fechar.")
+        sys.exit(0)
+    return trava  # precisa ficar referenciada enquanto o script roda
+
+
 if __name__ == "__main__":
-    escutar(carregar_config())
+    cfg = carregar_config()
+    trava = None if TESTE else instancia_unica()
+    escutar(cfg)
