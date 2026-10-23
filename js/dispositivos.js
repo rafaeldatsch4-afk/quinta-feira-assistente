@@ -37,7 +37,10 @@ window.Dispositivos = (() => {
   const ACOES_PC = new Set([
     "abrir_site", "pesquisar", "youtube", "abrir_app", "comando", "volume_mais", "volume_menos", "mudo",
     "midia_tocar_pausar", "midia_proxima", "midia_anterior", "bloquear", "desligar", "reiniciar", "cancelar_desligamento",
+    "escrever",
   ]);
+  // O ntfy aceita até 4096 bytes por mensagem; acima disso vira anexo e o PC não lê.
+  const LIMITE_TEXTO = 3800;
   const PERIGOSAS = new Set(["desligar", "reiniciar"]);
 
   const norm = (s) =>
@@ -48,6 +51,19 @@ window.Dispositivos = (() => {
   const reDesligar = /\b(desliga|desligue|desligar|apaga|apague|apagar|desativa|desative|desativar)\b/;
   const reMudo = /\b(muta|mutar|silencia|silenciar|mudo)\b/;
   const rePc = /\b(pc|computador|notebook|laptop)\b/;
+  const reBloco = /\bbloco de notas\b/;
+
+  // "escreve no bloco de notas: comprar pão", "anota no PC que a reunião é às 3",
+  // "escreve olá mundo no bloco de notas". Devolve o texto com as maiúsculas originais.
+  function textoParaEscrever(original) {
+    const o = String(original).trim().replace(/[.!]+$/, "");
+    const verbo = "(?:escreve|escreva|escrever|digita|digite|anota|anote|anotar)";
+    const destino = "(?:(?:no|na)\\s+(?:o\\s+)?(?:bloco\\s+de\\s+notas|pc|computador|notebook)(?:\\s+do\\s+(?:meu\\s+)?(?:pc|computador))?)";
+    let m = o.match(new RegExp(`\\b${verbo}\\s+${destino}\\s*[:,-]?\\s*(?:que\\s+|isso\\s*:?\\s*)?([\\s\\S]+)$`, "i"));
+    if (!m) m = o.match(new RegExp(`\\b${verbo}\\s+(?:isso\\s*:?\\s*)?([\\s\\S]+?)\\s+${destino}$`, "i"));
+    const texto = m && m[1].trim().replace(/^["“']|["”']$/g, "");
+    return texto || null;
+  }
 
   let pendente = null; // ação perigosa esperando "sim"
 
@@ -272,7 +288,7 @@ window.Dispositivos = (() => {
       }
     }
 
-    const noPc = rePc.test(t);
+    const noPc = rePc.test(t) || reBloco.test(t);
 
     // ----- bateria (lida no próprio aparelho, sem Tasker)
     if (/\bbateria\b/.test(t) && !noPc
@@ -297,6 +313,14 @@ window.Dispositivos = (() => {
       return { resposta: "Ainda não sei falar com o seu PC. Abra a engrenagem, preencha o tópico do PC em Dispositivos e toque em Salvar." };
     }
     const original = String(texto).toLowerCase();
+
+    // Antes das outras regras: o texto ditado pode conter "desliga", "volume" etc.
+    if (/\b(escreve|escreva|escrever|digita|digite|anota|anote|anotar)\b/.test(t)) {
+      const nota = textoParaEscrever(texto);
+      if (!nota) return { resposta: "O que você quer que eu escreva? Diga, por exemplo: escreve no bloco de notas comprar pão." };
+      if (new TextEncoder().encode(nota).length > LIMITE_TEXTO) return { resposta: "Esse texto é longo demais para mandar de uma vez. Divida em partes menores." };
+      return pedido("pc", "escrever", nota, "Escrevi no bloco de notas do PC.");
+    }
 
     if (/\bcancel(a|e|ar)\b/.test(t) && /\b(desligamento|desligar)\b/.test(t)) {
       return pedido("pc", "cancelar_desligamento", "", "Desligamento cancelado.");
@@ -334,6 +358,7 @@ window.Dispositivos = (() => {
     if (busca) return pedido("pc", "pesquisar", busca[1], "Pesquisando no PC.");
 
     const app = t.match(/\b(?:abre|abra|abrir)\s+(?:o |a )?(.+?)\s+no\s+(?:meu )?(?:pc|computador|notebook|laptop)\b/);
+    if (reBloco.test(t) && /\b(abre|abra|abrir)\b/.test(t)) return pedido("pc", "abrir_app", "bloco de notas", "Abrindo o bloco de notas no PC.");
     if (app && SITES[app[1]]) return pedido("pc", "abrir_site", SITES[app[1]], `Abrindo o ${app[1]} no PC.`);
     if (app) return pedido("pc", "abrir_app", app[1], `Abrindo ${app[1]} no PC.`);
 
@@ -347,6 +372,7 @@ window.Dispositivos = (() => {
       throw new Error(`A ação "${acao}" ainda não está configurada no Tasker.`);
     }
     if (alvo === "pc" && !ACOES_PC.has(acao)) throw new Error(`O PC não conhece a ação "${acao}".`);
+    if (new TextEncoder().encode(String(valor)).length > LIMITE_TEXTO) throw new Error("Texto longo demais para mandar ao aparelho.");
     const base = (cfg.ntfyServidor || "https://ntfy.sh").replace(/\/+$/, "");
     let res;
     try {
@@ -403,14 +429,14 @@ window.Dispositivos = (() => {
     if (cfg.topicoPc) {
       lista.push({
         name: "controlar_pc",
-        description: "Executa uma ação no computador (PC) do usuário: abrir apps e sites, volume, mídia, bloquear, desligar. Use quando ele pedir.",
+        description: "Executa uma ação no computador (PC) do usuário: abrir apps e sites, volume, mídia, bloquear, desligar e escrever um texto no Bloco de Notas (acao escrever). Use quando ele pedir.",
         parameters: {
           type: "OBJECT",
           properties: {
             acao: { type: "STRING", description: "Ação a executar.", enum: [...ACOES_PC] },
             valor: {
               type: "STRING",
-              description: "Endereço do site, termo de pesquisa, nome do app (ex.: spotify), passos de volume ou minutos para desligar. Vazio se não precisar.",
+              description: "Endereço do site, termo de pesquisa, nome do app (ex.: spotify), passos de volume, minutos para desligar, ou o texto completo a escrever no Bloco de Notas (acao escrever). Vazio se não precisar.",
             },
             confirmado: {
               type: "BOOLEAN",

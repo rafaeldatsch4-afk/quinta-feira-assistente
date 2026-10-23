@@ -106,7 +106,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "Executa uma ação no computador (PC) do usuário. Ações: abrir_site (valor: endereço), pesquisar (valor: termo), youtube (valor: termo), abrir_app (valor: spotify, chrome, bloco de notas, calculadora, explorador, vscode, discord, steam), comando (valor: modo jogo, limpar lixeira), volume_mais (valor: passos), volume_menos (valor: passos), mudo, midia_tocar_pausar, midia_proxima, midia_anterior, bloquear, desligar (valor: minutos), reiniciar (valor: minutos), cancelar_desligamento.",
+        "toolDescription": "Executa uma ação no computador (PC) do usuário. Ações: abrir_site (valor: endereço), pesquisar (valor: termo), youtube (valor: termo), abrir_app (valor: spotify, chrome, bloco de notas, calculadora, explorador, vscode, discord, steam), comando (valor: modo jogo, limpar lixeira), volume_mais (valor: passos), volume_menos (valor: passos), mudo, midia_tocar_pausar, midia_proxima, midia_anterior, bloquear, desligar (valor: minutos), reiniciar (valor: minutos), cancelar_desligamento, escrever (valor: o texto completo a escrever no Bloco de Notas).",
         "method": "POST",
         "url": "https://ntfy.sh/quinta-TROQUE-POR-UM-CODIGO-SECRETO-pc",
         "sendHeaders": true,

@@ -215,6 +215,44 @@ def energia(acao, valor):
     rodar(cmd)
 
 
+def pasta_notas():
+    """Documentos\\Quinta-Feira (ou a pasta pessoal, se não houver Documentos)."""
+    casa = os.path.expanduser("~")
+    docs = os.path.join(casa, "Documents")
+    if SISTEMA == "Windows":
+        try:  # acha Documentos mesmo quando o OneDrive mudou a pasta de lugar
+            import ctypes.wintypes
+
+            buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+            if ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf) == 0:  # 5 = Meus Documentos
+                docs = buf.value
+        except Exception:
+            pass
+    return os.path.join(docs if os.path.isdir(docs) else casa, "Quinta-Feira")
+
+
+def escrever(valor):
+    """Salva o texto ditado num arquivo novo e abre no Bloco de Notas."""
+    texto = str(valor).strip()
+    if not texto:
+        return log("  faltou o texto para escrever")
+    pasta = pasta_notas()
+    caminho = os.path.join(pasta, f"nota {datetime.now():%Y-%m-%d %H-%M-%S}.txt")
+    log(f"  escrevendo {len(texto)} caracteres em {caminho}")
+    if TESTE:
+        return
+    os.makedirs(pasta, exist_ok=True)
+    # utf-8-sig: o Bloco de Notas antigo também reconhece os acentos.
+    with open(caminho, "w", encoding="utf-8-sig", newline="\r\n" if SISTEMA == "Windows" else None) as f:
+        f.write(texto + "\n")
+    if SISTEMA == "Windows":
+        rodar(["notepad.exe", caminho])
+    elif SISTEMA == "Darwin":
+        rodar(["open", "-e", caminho])
+    else:
+        rodar(["xdg-open", caminho])
+
+
 def bloquear():
     log("  bloqueando a tela")
     if SISTEMA == "Windows":
@@ -243,6 +281,7 @@ def executar(cfg, acao, valor):
         "midia_proxima": lambda: midia("proxima"),
         "midia_anterior": lambda: midia("anterior"),
         "bloquear": bloquear,
+        "escrever": lambda: escrever(valor),
         "desligar": lambda: energia("desligar", valor),
         "reiniciar": lambda: energia("reiniciar", valor),
         "cancelar_desligamento": lambda: energia("cancelar", valor),

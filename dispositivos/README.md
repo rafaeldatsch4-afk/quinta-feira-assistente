@@ -99,6 +99,7 @@ O histórico fica em `quinta_pc.log`, na mesma pasta.
 | `bloquear` | — | Bloqueia a tela |
 | `desligar` / `reiniciar` | minutos (padrão 1) | Agenda desligar/reiniciar |
 | `cancelar_desligamento` | — | Cancela o agendamento |
+| `escrever` | texto | Salva o texto em `Documentos\Quinta-Feira\nota <data>.txt` e abre no Bloco de Notas |
 
 Pedidos com mais de 2 minutos são ignorados, para o PC não desligar sozinho ao ligar
 por causa de um pedido antigo.
@@ -170,7 +171,7 @@ No workflow, clique no **+** de *Tool* do **AI Agent** e adicione duas **HTTP Re
 (ou importe `n8n/quinta-feira-workflow.json`, que já vem com elas):
 
 **acao_pc**
-- *Description*: `Executa uma ação no computador (PC) do usuário. Ações: abrir_site (valor: endereço), pesquisar (valor: termo), youtube (valor: termo), abrir_app (valor: spotify, chrome, bloco de notas, calculadora, explorador, vscode, discord, steam), comando (valor: modo jogo, limpar lixeira), volume_mais (valor: passos), volume_menos (valor: passos), mudo, midia_tocar_pausar, midia_proxima, midia_anterior, bloquear, desligar (valor: minutos), reiniciar (valor: minutos), cancelar_desligamento.`
+- *Description*: `Executa uma ação no computador (PC) do usuário. Ações: abrir_site (valor: endereço), pesquisar (valor: termo), youtube (valor: termo), abrir_app (valor: spotify, chrome, bloco de notas, calculadora, explorador, vscode, discord, steam), comando (valor: modo jogo, limpar lixeira), volume_mais (valor: passos), volume_menos (valor: passos), mudo, midia_tocar_pausar, midia_proxima, midia_anterior, bloquear, desligar (valor: minutos), reiniciar (valor: minutos), cancelar_desligamento, escrever (valor: o texto completo a escrever no Bloco de Notas).`
 - *Method*: `POST` · *URL*: `https://ntfy.sh/SEU-TOPICO-pc`
 - *Send Headers*: `Priority` = `1` (e, se tiver, `Authorization` = `Bearer tk_...`)
 - *Send Body*: *Body Content Type* **Raw**, *Content Type* `text/plain`, *Body*:
