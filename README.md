@@ -119,6 +119,13 @@ enquanto estiver ligado; e no Android o Chrome pode fazer um "plim" ao reiniciar
 tela apagada seria preciso um app nativo (por exemplo, o gatilho "Ok Google" do Assistente ou o plugin AutoVoice
 do Tasker).
 
+### Instalar como app (PC e celular)
+
+No Chrome ou Edge do computador, abra o site e clique no ícone de **instalar** no fim da barra de
+endereço (ou menu ⋮ → **Transmitir, salvar e compartilhar → Instalar página como app**). Ela ganha janela própria,
+ícone na área de trabalho e pode iniciar com o Windows. No celular: menu ⋮ → **Instalar app**.
+As configurações ficam guardadas por navegador: preencha webhook, tópicos e chave também no PC.
+
 ### O que a interface envia
 
 `POST` com JSON:
@@ -182,6 +189,7 @@ js/live.js                     modo Live (Gemini Live API em tempo real)
 js/dispositivos.js             comandos para celular (Tasker) e PC via ntfy
 js/escuta.js                   escuta contínua com gatilho "Ei, Quinta-Feira"
 js/app.js                      voz, chat, painéis e configurações
+manifest.webmanifest, icons/   instalação como app (PWA)
 n8n/quinta-feira-workflow.json workflow de exemplo para importar
 dispositivos/                  ações no celular (Tasker) e no PC (quinta_pc.py)
 ```
