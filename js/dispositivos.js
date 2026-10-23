@@ -53,16 +53,26 @@ window.Dispositivos = (() => {
   const rePc = /\b(pc|computador|notebook|laptop)\b/;
   const reBloco = /\bbloco de notas\b/;
 
+  // Começos de frase que pedem conteúdo novo em vez de ditar um texto pronto.
+  const REFERENCIA = /^(isso|esse|essa|esses|essas|este|esta|aquilo|aquele|aquela|o codigo|a lista|o resumo|um|uma|uns|umas|algo|qualquer|sobre|o seguinte|a resposta|a receita|o texto|o script)\b/;
+
   // "escreve no bloco de notas: comprar pão", "anota no PC que a reunião é às 3",
   // "escreve olá mundo no bloco de notas". Devolve o texto com as maiúsculas originais.
   function textoParaEscrever(original) {
     const o = String(original).trim().replace(/[.!]+$/, "");
     const verbo = "(?:escreve|escreva|escrever|digita|digite|anota|anote|anotar)";
     const destino = "(?:(?:no|na)\\s+(?:o\\s+)?(?:bloco\\s+de\\s+notas|pc|computador|notebook)(?:\\s+do\\s+(?:meu\\s+)?(?:pc|computador))?)";
-    let m = o.match(new RegExp(`\\b${verbo}\\s+${destino}\\s*[:,-]?\\s*(?:que\\s+|isso\\s*:?\\s*)?([\\s\\S]+)$`, "i"));
-    if (!m) m = o.match(new RegExp(`\\b${verbo}\\s+(?:isso\\s*:?\\s*)?([\\s\\S]+?)\\s+${destino}$`, "i"));
+    // Com dois-pontos ("escreve no bloco de notas: ...") o que vem depois é literal.
+    let m = o.match(new RegExp(`\\b${verbo}\\s+${destino}\\s*:\\s*([\\s\\S]+)$`, "i"));
+    let literal = !!m;
+    if (!m) m = o.match(new RegExp(`\\b${verbo}\\s+${destino}\\s*[,-]?\\s*(?:que\\s+)?([\\s\\S]+)$`, "i"));
+    if (!m) m = o.match(new RegExp(`\\b${verbo}\\s+([\\s\\S]+?)\\s+${destino}$`, "i"));
     const texto = m && m[1].trim().replace(/^["“']|["”']$/g, "");
-    return texto || null;
+    if (!texto) return null;
+    // "escreve esse código no bloco de notas", "anota um poema sobre o mar": ela precisa CRIAR o
+    // conteúdo, então a conta fica com a IA (n8n ou Live), que depois chama a ação escrever.
+    if (!literal && REFERENCIA.test(norm(texto))) return { criar: true };
+    return { texto };
   }
 
   let pendente = null; // ação perigosa esperando "sim"
@@ -316,7 +326,9 @@ window.Dispositivos = (() => {
 
     // Antes das outras regras: o texto ditado pode conter "desliga", "volume" etc.
     if (/\b(escreve|escreva|escrever|digita|digite|anota|anote|anotar)\b/.test(t)) {
-      const nota = textoParaEscrever(texto);
+      const r = textoParaEscrever(texto);
+      if (r && r.criar) return null; // a IA escreve o conteúdo e usa a ferramenta
+      const nota = r && r.texto;
       if (!nota) return { resposta: "O que você quer que eu escreva? Diga, por exemplo: escreve no bloco de notas comprar pão." };
       if (new TextEncoder().encode(nota).length > LIMITE_TEXTO) return { resposta: "Esse texto é longo demais para mandar de uma vez. Divida em partes menores." };
       return pedido("pc", "escrever", nota, "Escrevi no bloco de notas do PC.");

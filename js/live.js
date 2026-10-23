@@ -60,7 +60,9 @@ window.Live = (() => {
       (ferramentas.length
         ? ` Você tem as ferramentas ${nomes} para agir nos aparelhos do usuário: ` +
           "use-as sempre que ele pedir uma dessas ações, sem explicar o processo, e confirme em uma frase curta. " +
-          "Antes de desligar ou reiniciar o PC, pergunte se ele confirma."
+          "Antes de desligar ou reiniciar o PC, pergunte se ele confirma. " +
+          "Para escrever no Bloco de Notas, crie o conteúdo completo e mande em controlar_pc com acao escrever; " +
+          "depois diga só uma frase curta, sem ler o texto."
         : "")
     );
   }
