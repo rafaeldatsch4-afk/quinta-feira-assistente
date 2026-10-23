@@ -330,26 +330,12 @@
   const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null;
   let ouvindo = false;
-  let desligarVisual = null;
-  let streamMic = null;
 
   if (!Reconhecimento) {
     el.mic.disabled = true;
     el.mic.title = "Reconhecimento de voz não suportado neste navegador (use Chrome ou Edge)";
     $("#status-voz").classList.add("off");
     $("#status-voz span").textContent = "VOZ INDISPONÍVEL";
-  }
-
-  async function iniciarVisualMic() {
-    try {
-      streamMic = await navigator.mediaDevices.getUserMedia({ audio: true });
-      desligarVisual = window.Nucleo.conectarAudio(streamMic);
-    } catch (_) { /* sem visual do microfone, tudo bem */ }
-  }
-  function pararVisualMic() {
-    if (desligarVisual) desligarVisual();
-    if (streamMic) streamMic.getTracks().forEach((t) => t.stop());
-    desligarVisual = null; streamMic = null;
   }
 
   function ouvir() {
@@ -361,12 +347,12 @@
     rec.continuous = false;
 
     let final = "";
+    let ultimoParcial = "";
     rec.onstart = () => {
       ouvindo = true;
       definirEstado("ouvindo");
       el.legenda.classList.add("parcial");
       el.legenda.textContent = "Pode falar…";
-      iniciarVisualMic();
     };
     rec.onresult = (ev) => {
       let parcial = "";
@@ -374,22 +360,34 @@
         const r = ev.results[i];
         if (r.isFinal) final += r[0].transcript; else parcial += r[0].transcript;
       }
+      ultimoParcial = parcial;
       el.legenda.textContent = (final + parcial).trim() || "Pode falar…";
     };
+    let erroMic = false;
+    const AVISOS = {
+      "not-allowed": "Permissão do microfone negada. Toque no cadeado ao lado do endereço, libere o microfone e tente de novo.",
+      "service-not-allowed": "O navegador bloqueou o reconhecimento de voz. Libere o microfone para este site.",
+      "audio-capture": "Não achei um microfone funcionando. Confira se outro app não está usando o microfone.",
+      "network": "O reconhecimento de voz do navegador precisa de internet e não conseguiu falar com o Google.",
+      "language-not-supported": "Este navegador não tem reconhecimento de voz em português.",
+    };
     rec.onerror = (ev) => {
-      if (ev.error === "not-allowed") adicionarMensagem("ia", "⚠ Permissão do microfone negada.", "erro");
-      else if (ev.error !== "no-speech" && ev.error !== "aborted") adicionarMensagem("ia", `⚠ Erro no reconhecimento de voz: ${ev.error}`, "erro");
+      if (ev.error === "no-speech" || ev.error === "aborted") return;
+      erroMic = true;
+      adicionarMensagem("ia", `⚠ ${AVISOS[ev.error] || `Erro no reconhecimento de voz: ${ev.error}`}`, "erro");
     };
     rec.onend = () => {
       ouvindo = false;
       window.Escuta.retomar();
-      pararVisualMic();
       el.legenda.classList.remove("parcial");
-      if (final.trim()) {
-        enviar(final);
+      // O Chrome às vezes encerra sem marcar o trecho como final: usa o que foi entendido.
+      const texto = (final + (final.trim() ? "" : ultimoParcial)).trim();
+      if (texto) {
+        enviar(texto);
       } else {
         el.legenda.textContent = "";
         if (estado === "ouvindo") definirEstado("ocioso");
+        if (!erroMic) adicionarMensagem("ia", "Não consegui ouvir nada. Toque no microfone, espere o aviso \"Pode falar…\" e fale de novo.", "erro");
       }
     };
     // A escuta contínua precisa soltar o microfone antes.
