@@ -49,15 +49,16 @@ window.Live = (() => {
     fimFila = 0;
   }
 
-  function instrucoes(comFerramentas) {
+  function instrucoes(ferramentas) {
+    const nomes = ferramentas.map((f) => f.name).join(", ");
     const nome = cfg.nomeUsuario || "Chefe";
     const agora = new Date().toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" });
     return (
       `Você é a Quinta-Feira, assistente pessoal de ${nome}, no estilo do J.A.R.V.I.S. ` +
       "Fale sempre em português do Brasil, de forma natural, curta, confiante e simpática. " +
       `Chame o usuário de ${nome}. Data e hora atuais: ${agora}.` +
-      (comFerramentas
-        ? " Você controla o celular e o PC do usuário com as ferramentas controlar_celular e controlar_pc: " +
+      (ferramentas.length
+        ? ` Você tem as ferramentas ${nomes} para agir nos aparelhos do usuário: ` +
           "use-as sempre que ele pedir uma dessas ações, sem explicar o processo, e confirme em uma frase curta. " +
           "Antes de desligar ou reiniciar o PC, pergunte se ele confirma."
         : "")
@@ -106,7 +107,7 @@ window.Live = (() => {
         const setup = {
           model: `models/${cfg.liveModelo || "gemini-3.8-live"}`,
           generationConfig: { responseModalities: ["AUDIO"] },
-          systemInstruction: { parts: [{ text: instrucoes(ferramentas.length > 0) }] },
+          systemInstruction: { parts: [{ text: instrucoes(ferramentas) }] },
           inputAudioTranscription: {},
           outputAudioTranscription: {},
         };

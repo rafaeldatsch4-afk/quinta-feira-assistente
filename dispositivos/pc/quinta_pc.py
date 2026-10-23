@@ -46,6 +46,12 @@ def log(texto):
         pass
 
 
+def sair(texto):
+    """Encerra deixando o motivo no quinta_pc.log (sem janela, o pythonw não mostra nada)."""
+    log(texto)
+    sys.exit(1)
+
+
 def normalizar(texto):
     texto = unicodedata.normalize("NFD", str(texto)).encode("ascii", "ignore").decode()
     return texto.lower().strip()
@@ -56,11 +62,11 @@ def criar_config(caminho):
     print("Primeira vez por aqui: vou criar o config.json.")
     try:
         topico = input("Cole aqui o tópico do PC e aperte Enter: ")
-    except EOFError:  # aberto sem janela (pythonw): não dá para perguntar
-        sys.exit("Rode primeiro o testar_quinta_pc.bat para cadastrar o tópico.")
+    except (EOFError, RuntimeError):  # aberto sem janela (pythonw): não dá para perguntar
+        sair("Falta o config.json. Rode primeiro o testar_quinta_pc.bat para cadastrar o tópico.")
     topico = "".join(c for c in topico.strip().rstrip(".") if c.isascii() and (c.isalnum() or c in "-_"))
     if len(topico) < 8:
-        sys.exit("Tópico inválido. Rode de novo e cole o tópico completo (ex.: quinta-abc123-pc).")
+        sair("Tópico inválido. Rode de novo e cole o tópico completo (ex.: quinta-abc123-pc).")
     with open(os.path.join(PASTA, "config.exemplo.json"), encoding="utf-8") as f:
         cfg = json.load(f)
     cfg["topico"] = topico
@@ -76,7 +82,7 @@ def carregar_config():
     with open(caminho, encoding="utf-8") as f:
         cfg = json.load(f)
     if not cfg.get("topico") or "TROQUE" in cfg["topico"]:
-        sys.exit("Defina um tópico secreto em config.json (campo \"topico\").")
+        sair("Defina um tópico secreto em config.json (campo \"topico\").")
     cfg.setdefault("servidor", "https://ntfy.sh")
     cfg["apps"] = {normalizar(k): v for k, v in cfg.get("apps", {}).items()}
     cfg["comandos"] = {normalizar(k): v for k, v in cfg.get("comandos", {}).items()}
@@ -270,6 +276,9 @@ def escutar(cfg):
     topico = urllib.parse.quote(cfg["topico"])
     vistos = set()
     ultimo_id = None
+    # Até chegar a primeira mensagem, pede ao ntfy o que foi enviado desde que o script ligou,
+    # para não perder pedidos feitos durante uma reconexão.
+    desde = int(time.time())
     headers = {"User-Agent": "quinta-pc"}
     if cfg.get("token"):
         headers["Authorization"] = f"Bearer {cfg['token']}"
@@ -277,9 +286,7 @@ def escutar(cfg):
     log(f"Quinta-PC ligado ({SISTEMA}{', modo teste' if TESTE else ''}). Escutando {base}/{cfg['topico']}")
     espera = 2
     while True:
-        url = f"{base}/{topico}/json"
-        if ultimo_id:
-            url += f"?since={ultimo_id}"
+        url = f"{base}/{topico}/json?since={ultimo_id or desde}"
         try:
             req = urllib.request.Request(url, headers=headers)
             # O ntfy manda "keepalive" a cada ~45 s; sem nada em 120 s, reconecta.
@@ -315,7 +322,7 @@ def instancia_unica():
         trava.bind(("127.0.0.1", 47831))
     except OSError:
         log("Já existe outro Quinta-PC rodando; esta cópia vai fechar.")
-        sys.exit(0)
+        sys.exit(0)  # não é erro
     return trava  # precisa ficar referenciada enquanto o script roda
 
 

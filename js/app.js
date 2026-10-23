@@ -241,8 +241,10 @@
   function executarAcao(acao) {
     if (!acao) return;
     const tipo = acao.tipo || acao.type;
-    if ((tipo === "abrir_url" || tipo === "open_url") && acao.url) {
-      window.open(acao.url, "_blank", "noopener");
+    if (tipo === "abrir_url" || tipo === "open_url") {
+      // Só http/https: um "javascript:" vindo da resposta rodaria dentro deste site.
+      const url = window.Dispositivos.urlSegura(acao.url);
+      if (url) window.open(url, "_blank", "noopener");
     }
     // O n8n também pode pedir ações nos dispositivos: { tipo: "dispositivo", alvo: "celular"|"pc", acao, valor }
     if (tipo === "dispositivo" && (acao.alvo === "celular" || acao.alvo === "pc") && acao.acao) {
@@ -364,6 +366,7 @@
       el.legenda.textContent = (final + parcial).trim() || "Pode falar…";
     };
     let erroMic = false;
+    cancelouMic = false;
     const AVISOS = {
       "not-allowed": "Permissão do microfone negada. Toque no cadeado ao lado do endereço, libere o microfone e tente de novo.",
       "service-not-allowed": "O navegador bloqueou o reconhecimento de voz. Libere o microfone para este site.",
@@ -387,14 +390,24 @@
       } else {
         el.legenda.textContent = "";
         if (estado === "ouvindo") definirEstado("ocioso");
-        if (!erroMic) adicionarMensagem("ia", "Não consegui ouvir nada. Toque no microfone, espere o aviso \"Pode falar…\" e fale de novo.", "erro");
+        if (!erroMic && !cancelouMic) adicionarMensagem("ia", "Não consegui ouvir nada. Toque no microfone, espere o aviso \"Pode falar…\" e fale de novo.", "erro");
       }
     };
     // A escuta contínua precisa soltar o microfone antes.
-    window.Escuta.pausar().then(() => rec.start());
+    window.Escuta.pausar().then(() => {
+      try {
+        rec.start();
+      } catch (e) {
+        window.Escuta.retomar();
+        adicionarMensagem("ia", `⚠ Não consegui ligar o microfone (${e.message}). Tente de novo.`, "erro");
+      }
+    });
   }
 
+  let cancelouMic = false;
   function pararDeOuvir() { if (rec && ouvindo) rec.stop(); }
+  // Para sem reclamar que não ouviu nada (ao abrir o Live ou apertar Esc).
+  function cancelarEscuta() { if (rec && ouvindo) { cancelouMic = true; rec.abort(); } }
 
   el.mic.addEventListener("click", () => (ouvindo ? pararDeOuvir() : ouvir()));
 
@@ -406,7 +419,7 @@
       abrirMenu(false);
       if (window.Live.ativo) window.Live.parar();
       pararFala();
-      pararDeOuvir();
+      cancelarEscuta();
     }
   });
 
@@ -627,7 +640,7 @@
     if (window.Live.ativo) { window.Live.parar(); return; }
     if (botaoLive.classList.contains("conectando")) return;
     pararFala();
-    pararDeOuvir();
+    cancelarEscuta();
     await window.Escuta.pausar();
     el.legenda.classList.remove("parcial");
     el.legenda.textContent = "Conectando ao modo Live…";

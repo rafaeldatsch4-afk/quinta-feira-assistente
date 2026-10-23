@@ -8,7 +8,8 @@
         "responseMode": "responseNode",
         "options": {
           "allowedOrigins": "*"
-        }
+        },
+        "authentication": "basicAuth"
       },
       "id": "a1f0c6c2-0001-4c1e-9a10-000000000001",
       "name": "Webhook",
@@ -134,7 +135,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "Executa uma ação no celular Android do usuário. Ações: lanterna_ligar, lanterna_desligar, volume_midia (valor: 0 a 15), silencioso, som_normal, nao_perturbe_ligar, nao_perturbe_desligar, abrir_app (valor: nome do app), abrir_site (valor: endereço), midia_tocar_pausar, midia_proxima, midia_anterior, alarme (valor: HH:MM).",
+        "toolDescription": "Executa uma ação no celular Android do usuário. Ações: lanterna_ligar, lanterna_desligar, volume_midia (valor: 0 a 15), silencioso, som_normal, abrir_app (valor: nome do app), abrir_site (valor: endereço), midia_tocar_pausar, midia_proxima, midia_anterior, alarme (valor: HH:MM), timer (valor: duração em segundos).",
         "method": "POST",
         "url": "https://ntfy.sh/quinta-TROQUE-POR-UM-CODIGO-SECRETO-celular",
         "sendHeaders": true,

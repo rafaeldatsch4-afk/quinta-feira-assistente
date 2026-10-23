@@ -32,10 +32,12 @@ Abra `http://localhost:8080` no **Chrome** ou **Edge** (o reconhecimento de voz 
 ## Conectando ao n8n
 
 1. No n8n, vá em **Workflows → Import from File** e importe `n8n/quinta-feira-workflow.json`.
-2. Abra o nó **Modelo de Chat** e selecione sua credencial (OpenAI por padrão; pode trocar por Claude, Gemini, Ollama etc.).
-3. **Ative** o workflow e copie a **Production URL** do nó **Webhook**
+2. Abra o nó **Modelo de Chat** e selecione sua credencial do Google Gemini (pode trocar por outro modelo).
+3. Abra o nó **Webhook** e, em *Authentication* (Basic Auth), crie a credencial com usuário e senha. Sem ela, qualquer pessoa com a URL usaria a sua cota e os seus aparelhos.
+4. Nas ferramentas **acao_pc** e **acao_celular**, troque `quinta-TROQUE-POR-UM-CODIGO-SECRETO-…` pelos seus tópicos.
+5. **Ative** o workflow e copie a **Production URL** do nó **Webhook**
    (algo como `https://seu-n8n.com/webhook/quinta-feira`).
-4. Na interface, clique na engrenagem, cole a URL em **Webhook do n8n**, clique em **Testar conexão** e depois em **Salvar**.
+6. Na interface, clique na engrenagem, cole a URL em **Webhook do n8n**, escolha **Basic Auth** com o mesmo usuário e senha, clique em **Testar conexão** e depois em **Salvar**.
 
 O workflow de exemplo é:
 

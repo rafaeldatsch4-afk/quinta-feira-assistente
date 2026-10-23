@@ -334,6 +334,7 @@ window.Dispositivos = (() => {
     if (busca) return pedido("pc", "pesquisar", busca[1], "Pesquisando no PC.");
 
     const app = t.match(/\b(?:abre|abra|abrir)\s+(?:o |a )?(.+?)\s+no\s+(?:meu )?(?:pc|computador|notebook|laptop)\b/);
+    if (app && SITES[app[1]]) return pedido("pc", "abrir_site", SITES[app[1]], `Abrindo o ${app[1]} no PC.`);
     if (app) return pedido("pc", "abrir_app", app[1], `Abrindo ${app[1]} no PC.`);
 
     return null;
@@ -345,6 +346,7 @@ window.Dispositivos = (() => {
     if (alvo === "celular" && !ACOES_CELULAR.has(acao)) {
       throw new Error(`A ação "${acao}" ainda não está configurada no Tasker.`);
     }
+    if (alvo === "pc" && !ACOES_PC.has(acao)) throw new Error(`O PC não conhece a ação "${acao}".`);
     const base = (cfg.ntfyServidor || "https://ntfy.sh").replace(/\/+$/, "");
     let res;
     try {
@@ -482,5 +484,5 @@ window.Dispositivos = (() => {
     }
   }
 
-  return { interpretar, enviar, limparTopico, declaracoes, executar, textoBateria };
+  return { interpretar, enviar, limparTopico, declaracoes, executar, textoBateria, urlSegura };
 })();
