@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Quinta-Feira</title>
+  <meta name="description" content="Interface da assistente virtual Quinta-Feira">
+  <meta name="theme-color" content="#05080d">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/icone.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icone-192.png">
+  <link rel="apple-touch-icon" href="icons/icone-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=83dba01">
+</head>
+<body data-estado="ocioso">
+  <div class="grade-fundo" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <header class="topo">
+    <button class="botao-icone botao-menu" id="botao-menu" title="Menu" aria-label="Abrir menu" aria-controls="painel-esq" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    </button>
+    <div class="marca">
+      <span class="marca-icone" aria-hidden="true"></span>
+      <div>
+        <h1>QUINTA-FEIRA</h1>
+        <p class="marca-sub">Assistente Pessoal · v1.0</p>
+      </div>
+    </div>
+    <div class="topo-status">
+      <span class="pilula" id="status-n8n"><i></i><span>N8N</span></span>
+      <span class="pilula" id="status-rede"><i></i><span>ONLINE</span></span>
+      <span class="pilula" id="status-voz"><i></i><span>VOZ ATIVA</span></span>
+      <button class="botao-icone botao-escuta" id="botao-escuta" title="Escuta contínua: diga &quot;Ei, Quinta-Feira&quot;" aria-label="Escuta contínua" aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/></svg>
+      </button>
+      <button class="botao-icone" id="botao-config" title="Configurações" aria-label="Configurações">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Painel esquerdo: sistema -->
+    <aside class="painel painel-esq" id="painel-esq">
+      <div class="gaveta-topo">
+        <span class="gaveta-titulo">Menu</span>
+        <button class="botao-icone" id="fechar-menu" aria-label="Fechar menu">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <section class="cartao">
+        <h2 class="cartao-titulo">Hora local</h2>
+        <div class="relogio" id="relogio">00:00<span>:00</span></div>
+        <div class="data" id="data">—</div>
+      </section>
+
+      <section class="cartao">
+        <h2 class="cartao-titulo">Diagnóstico</h2>
+        <ul class="metricas">
+          <li>
+            <div class="metrica-rotulo"><span>Núcleo</span><b id="m-nucleo">0%</b></div>
+            <div class="barra"><i id="b-nucleo"></i></div>
+          </li>
+          <li>
+            <div class="metrica-rotulo"><span>Memória</span><b id="m-memoria">0%</b></div>
+            <div class="barra"><i id="b-memoria"></i></div>
+          </li>
+          <li>
+            <div class="metrica-rotulo"><span>Energia</span><b id="m-energia">—</b></div>
+            <div class="barra"><i id="b-energia"></i></div>
+          </li>
+          <li>
+            <div class="metrica-rotulo"><span>Sinal</span><b id="m-sinal">—</b></div>
+            <div class="barra"><i id="b-sinal"></i></div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="cartao">
+        <h2 class="cartao-titulo">Comandos rápidos</h2>
+        <div class="atalhos">
+          <button class="atalho" data-comando="Que horas são?">Horário</button>
+          <button class="atalho" data-comando="Que dia é hoje?">Data</button>
+          <button class="atalho" data-comando="Status do sistema">Status</button>
+          <button class="atalho" data-comando="Conte uma piada">Piada</button>
+          <button class="atalho" data-comando="Quanto é 15% de 240?">Calcular</button>
+          <button class="atalho" data-comando="Ajuda">Ajuda</button>
+        </div>
+      </section>
+
+      <section class="cartao gaveta-acoes">
+        <h2 class="cartao-titulo">Sistema</h2>
+        <p class="gaveta-status" id="menu-status-n8n"></p>
+        <button class="item-menu" id="menu-config">Configurações</button>
+        <button class="item-menu" id="menu-limpar">Limpar conversa</button>
+        <button class="item-menu" id="menu-silenciar">Parar de falar</button>
+      </section>
+    </aside>
+
+    <!-- Centro: núcleo animado -->
+    <section class="centro">
+      <div class="nucleo-wrap">
+        <canvas id="nucleo" aria-hidden="true"></canvas>
+        <div class="nucleo-texto">
+          <span class="nucleo-nome">QUINTA-FEIRA</span>
+          <span class="nucleo-estado" id="rotulo-estado">Aguardando comando</span>
+        </div>
+      </div>
+      <p class="legenda" id="legenda" aria-live="polite"></p>
+    </section>
+
+    <!-- Painel direito: conversa -->
+    <aside class="painel painel-dir">
+      <section class="cartao cartao-chat">
+        <div class="chat-cabecalho">
+          <h2 class="cartao-titulo">Registro de conversa</h2>
+          <button class="link-botao" id="limpar-chat">Limpar</button>
+        </div>
+        <div class="chat" id="chat" role="log" aria-live="polite"></div>
+      </section>
+    </aside>
+  </main>
+
+  <div class="gaveta-fundo" id="gaveta-fundo" hidden></div>
+
+  <footer class="console">
+    <form class="entrada" id="form-entrada" autocomplete="off">
+      <button type="button" class="botao-mic" id="botao-mic" title="Falar (Ctrl + Espaço)" aria-label="Falar">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4M8 22h8"/></svg>
+      </button>
+      <button type="button" class="botao-live" id="botao-live" title="Modo Live: conversa em tempo real" aria-label="Modo Live" aria-pressed="false">LIVE</button>
+      <input type="text" id="campo" placeholder="Diga algo para a Quinta-Feira…" aria-label="Mensagem">
+      <button type="submit" class="botao-enviar" aria-label="Enviar">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+    <p class="dica">Ctrl + Espaço para falar · LIVE para conversar em tempo real · Enter para enviar</p>
+  </footer>
+
+  <!-- Configurações -->
+  <dialog class="modal" id="modal-config">
+    <form method="dialog" class="modal-corpo" id="form-config">
+      <h2>Configurações</h2>
+
+      <label class="campo-config">
+        <span>Seu nome</span>
+        <input type="text" name="nomeUsuario" placeholder="Chefe">
+      </label>
+
+      <label class="campo-config">
+        <span>Webhook do n8n</span>
+        <input type="url" name="webhookUrl" placeholder="https://seu-n8n.com/webhook/quinta-feira">
+        <small>URL de produção do nó <b>Webhook</b> do seu workflow. Sem ela, a Quinta-Feira roda em modo offline com respostas básicas.</small>
+      </label>
+
+      <label class="campo-config">
+        <span>Autenticação do webhook</span>
+        <select name="authTipo">
+          <option value="basic">Basic Auth (usuário e senha)</option>
+          <option value="bearer">Header Auth (token Bearer)</option>
+          <option value="nenhuma">Nenhuma</option>
+        </select>
+        <small>Use o mesmo tipo escolhido em <i>Authentication</i> no nó Webhook do n8n. As credenciais ficam salvas só neste navegador.</small>
+      </label>
+
+      <div class="linha-config" data-auth="basic">
+        <label class="campo-config">
+          <span>Usuário</span>
+          <input type="text" name="authUsuario" autocomplete="username">
+        </label>
+        <label class="campo-config">
+          <span>Senha</span>
+          <input type="password" name="authSenha" autocomplete="current-password">
+        </label>
+      </div>
+
+      <label class="campo-config" data-auth="bearer">
+        <span>Token</span>
+        <input type="password" name="token" placeholder="Só o token, sem a palavra Bearer">
+        <small>No n8n, a credencial Header Auth deve ter Name <code>Authorization</code> e Value <code>Bearer SEU_TOKEN</code>.</small>
+      </label>
+
+      <fieldset class="grupo-config">
+        <legend>Dispositivos (ntfy)</legend>
+        <label class="campo-config">
+          <span>Tópico do celular</span>
+          <input type="text" name="topicoCelular" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="quinta-…-celular">
+          <small>Mesmo nome que você inscreveu no app ntfy do celular. Funciona como senha.</small>
+        </label>
+        <label class="campo-config">
+          <span>Tópico do PC (opcional)</span>
+          <input type="text" name="topicoPc" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="quinta-…-pc">
+        </label>
+        <label class="campo-config">
+          <span>Servidor ntfy</span>
+          <input type="url" name="ntfyServidor" autocomplete="off" autocapitalize="none" placeholder="https://ntfy.sh">
+        </label>
+        <label class="campo-config">
+          <span>Contatos do WhatsApp</span>
+          <textarea name="contatos" rows="4" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="joão=11 91234-5678&#10;maria=21 98765-4321"></textarea>
+          <small>Um por linha: nome=número com DDD. Fica salvo só neste navegador. Serve para "abre a conversa com o João no WhatsApp".</small>
+        </label>
+        <div class="linha-teste">
+          <button type="button" class="botao-sec" id="testar-celular">Testar lanterna</button>
+          <span class="resultado-teste" id="resultado-celular"></span>
+        </div>
+      </fieldset>
+
+      <fieldset class="grupo-config">
+        <legend>Modo Live (Gemini)</legend>
+        <label class="campo-config">
+          <span>Chave do Google</span>
+          <input type="password" name="geminiKey" autocomplete="off" placeholder="Chave do Google AI Studio">
+          <small>Conversa por voz em tempo real direto com o Gemini, sem passar pelo n8n. A chave fica salva só neste navegador.</small>
+        </label>
+        <label class="campo-config">
+          <span>Modelo</span>
+          <input type="text" name="liveModelo" placeholder="gemini-3.8-live">
+        </label>
+      </fieldset>
+
+      <div class="linha-teste">
+        <button type="button" class="botao-sec" id="testar-n8n">Testar conexão</button>
+        <span class="resultado-teste" id="resultado-teste"></span>
+      </div>
+
+      <div class="campo-config">
+        <label for="select-voz"><span class="rotulo-config">Voz do navegador</span></label>
+        <div class="linha-voz">
+          <select name="voz" id="select-voz"></select>
+          <button type="button" class="botao-sec" id="ouvir-amostra">Ouvir amostra</button>
+        </div>
+        <small>Se o n8n mandar áudio (voz neural), ele tem prioridade e esta voz fica só de reserva. Veja o README para ativar.</small>
+      </div>
+
+      <div class="linha-config">
+        <label class="campo-config">
+          <span>Velocidade <output id="out-vel">1.0</output></span>
+          <input type="range" name="velocidade" min="0.6" max="1.6" step="0.1" value="1">
+        </label>
+        <label class="campo-config">
+          <span>Tom <output id="out-tom">1.0</output></span>
+          <input type="range" name="tom" min="0.5" max="1.8" step="0.1" value="1">
+        </label>
+      </div>
+
+      <label class="campo-check">
+        <input type="checkbox" name="falarRespostas" checked>
+        <span>Ler respostas em voz alta</span>
+      </label>
+
+      <div class="modal-acoes">
+        <button value="cancelar" class="botao-sec">Cancelar</button>
+        <button value="salvar" class="botao-pri">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/config.js?v=83dba01"></script>
+  <script src="js/nucleo.js?v=83dba01"></script>
+  <script src="js/dispositivos.js?v=83dba01"></script>
+  <script src="js/cerebro.js?v=83dba01"></script>
+  <script src="js/live.js?v=83dba01"></script>
+  <script src="js/escuta.js?v=83dba01"></script>
+  <script src="js/app.js?v=83dba01"></script>
+</body>
+</html>
